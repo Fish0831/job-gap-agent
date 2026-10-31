@@ -1,0 +1,28 @@
+# profile.yaml 的範例格式（真正的 profile.yaml 不公開）
+# level：basic = 做過但要查資料或有人帶；working = 能獨立做出來；strong = 能解釋原理、自己除錯、教別人
+# evidence 留空 = 會一點但沒有作品 → 報告顯示「部分」
+
+evidence:
+  - id: token-cost-estimator
+    type: project
+    summary: LLM API cost estimator with CLI, FastAPI and pytest
+    url: https://github.com/Fish0831/token-cost-estimator
+  - id: master-thesis
+    type: research
+    summary: Deep reinforcement learning (DQN, PPO, SAC) for dynamic pricing, PyTorch
+
+skills:
+  - name: Python
+    level: working
+    evidence: [token-cost-estimator, master-thesis]
+  - name: FastAPI
+    level: basic
+    evidence: [token-cost-estimator]
+  - name: Reinforcement Learning
+    level: strong
+    aliases: [DRL, 強化學習]
+    evidence: [master-thesis]
+  - name: Docker
+    level: basic
+    aliases: [container]
+    evidence: []
