@@ -137,7 +137,7 @@ def match(job: JobRequirements, profile: Profile, client=None) -> tuple[list[Mat
     for r in reqs:
         if r.skill in matched:
             skill = matched[r.skill]
-            results.append(decide(r, skill, "same", f"名稱對上 profile 的 {skill.name}"))
+            results.append(decide(r, skill, "same", f"名稱對上 {skill.name}"))
             continue
         m = mappings.get(r.skill.strip().lower())
         if m is None:
@@ -147,7 +147,8 @@ def match(job: JobRequirements, profile: Profile, client=None) -> tuple[list[Mat
             results.append(decide(r, None, "none", f"LLM 對應到不存在的技能「{m.profile_skill}」，不採用"))
         else:
             skill = by_name.get(m.profile_skill) if m.profile_skill else None
-            results.append(decide(r, skill, m.relation, f"[{m.relation} → {m.profile_skill}] {m.reason}"))
+            label = {"same": f"對應 {m.profile_skill}：", "related": f"相關技能 {m.profile_skill}：", "none": ""}
+            results.append(decide(r, skill, m.relation, label[m.relation] + m.reason))
     return results, stats
 
 
