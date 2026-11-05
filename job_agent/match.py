@@ -11,7 +11,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from job_agent.llm import call_structured
+from job_agent.llm import call_structured, model_for
 from job_agent.schemas import JobRequirements, MatchResult, Profile, ProfileSkill, Requirement
 
 Relation = Literal["same", "related", "none"]
@@ -27,7 +27,7 @@ class SkillMapping(BaseModel):
     relation: Relation = Field(
         description="same = the same skill under another name; related = adjacent skill that partly transfers; none = no match"
     )
-    reason: str = Field(description="One short sentence explaining the judgement")
+    reason: str = Field(description="One short sentence in Traditional Chinese explaining the judgement")
 
 
 class MappingResult(BaseModel):
@@ -45,7 +45,8 @@ Rules:
 - Return exactly one mapping per requirement skill, copying requirement_skill exactly.
 - profile_skill must be copied exactly from the candidate's list. Never invent a skill.
 - Be conservative: if unsure between "same" and "related", choose "related"; if unsure between "related" and "none", choose "none".
-- Judge only whether the skills match, not how good the candidate is."""
+- Judge only whether the skills match, not how good the candidate is.
+- Write `reason` in Traditional Chinese (繁體中文), one short sentence. Keep skill names in English."""
 
 
 # ===== A. 去重 =====
@@ -88,7 +89,7 @@ def exact_match(requirements, profile) -> tuple[dict[str, ProfileSkill], list[Re
 
 # ===== C. 語意對應 =====
 
-def semantic_map(unmatched: list[Requirement], profile: Profile, client=None) -> tuple[MappingResult, dict]:
+def semantic_map(unmatched: list[Requirement], profile: Profile, client=None, model: str | None = None) -> tuple[MappingResult, dict]:
     skills = "\n".join(
         f"- {s.name}" + (f" (also called: {', '.join(s.aliases)})" if s.aliases else "")
         for s in profile.skills
@@ -99,36 +100,39 @@ def semantic_map(unmatched: list[Requirement], profile: Profile, client=None) ->
         system=SYSTEM,
         user=user,
         schema=MappingResult,
-        tool_name="record_skill_mappings",
-        tool_description="Record how each job requirement skill maps to the candidate's skills.",
+        name="match",
+        model=model or model_for("match"),
         client=client,
     )
 
 
 # ===== D. 檢查＋決定狀態 =====
 
-def decide(req: Requirement, skill: ProfileSkill | None, relation: Relation, reason: str) -> MatchResult:
-    """狀態規則全部在這裡：LLM 只給 relation，證據和熟練度一律從 profile 拿。"""
-    if skill is None or relation == "none":
-        return MatchResult(skill=req.skill, required=req.required, status="missing", reason=reason)
-    if relation == "same" and skill.evidence:
+def decide(req: Requirement, skill: ProfileSkill | None, how: str, reason: str) -> MatchResult:
+    """狀態規則全部在這裡：LLM 只給關係，證據和熟練度一律從 profile 拿。
+    how：name = 程式名稱對上；same／related／none = LLM 的判斷。"""
+    if skill is None or how == "none":
+        return MatchResult(skill=req.skill, required=req.required, status="missing", reason=reason, how="none")
+    if how in ("name", "same") and skill.evidence:
         status = "have"
     else:
-        status = "partial"  # same 但沒作品證據，或只是相關技能
+        status = "partial"  # 同一個技能但沒作品證據，或只是相關技能
     return MatchResult(
         skill=req.skill, required=req.required, status=status,
         evidence=list(skill.evidence), level=skill.level, reason=reason,
+        how=how, matched_to=skill.name,
     )
 
 
-def match(job: JobRequirements, profile: Profile, client=None) -> tuple[list[MatchResult], dict]:
+def match(job: JobRequirements, profile: Profile, client=None, model: str | None = None) -> tuple[list[MatchResult], dict]:
+    """model：比對用哪個模型；不給就照 MATCH_MODEL 設定（模型比較工具會指定）。"""
     reqs = dedupe(job.requirements)
     matched, unmatched = exact_match(reqs, profile)
 
     mappings: dict[str, SkillMapping] = {}
     stats = {"cost_usd": 0.0, "llm_called": False, "exact": len(matched), "semantic": len(unmatched)}
     if unmatched:  # 全部都對上就不花錢
-        result, llm_stats = semantic_map(unmatched, profile, client)
+        result, llm_stats = semantic_map(unmatched, profile, client, model)
         stats.update(llm_stats, llm_called=True)
         mappings = {m.requirement_skill.strip().lower(): m for m in result.mappings}
 
@@ -137,7 +141,7 @@ def match(job: JobRequirements, profile: Profile, client=None) -> tuple[list[Mat
     for r in reqs:
         if r.skill in matched:
             skill = matched[r.skill]
-            results.append(decide(r, skill, "same", f"名稱對上 {skill.name}"))
+            results.append(decide(r, skill, "name", f"名稱對上 {skill.name}"))
             continue
         m = mappings.get(r.skill.strip().lower())
         if m is None:
@@ -182,5 +186,5 @@ if __name__ == "__main__":
     results, match_stats = match(job, profile)
     print_table(job, results)
     total = extract_stats["cost_usd"] + match_stats["cost_usd"]
-    print(f"名稱直接對上 {match_stats['exact']} 個、交給 LLM {match_stats['semantic']} 個")
+    print(f"名稱直接對上 {match_stats['exact']} 個、交給 LLM {match_stats['semantic']} 個（{match_stats.get('model', '沒有呼叫 LLM')}）")
     print(f"cost: 拆解 ${extract_stats['cost_usd']:.4f} + 比對 ${match_stats['cost_usd']:.4f} = ${total:.4f}")

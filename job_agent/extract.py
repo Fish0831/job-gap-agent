@@ -1,10 +1,13 @@
 """① 拆解職缺：職缺文字檔 → JobRequirements。"""
 
+import hashlib
 import sys
 from pathlib import Path
 
-from job_agent.llm import call_structured
+from job_agent.llm import call_structured, model_for
 from job_agent.schemas import JobRequirements
+
+CACHE_DIR = Path("cache")
 
 SYSTEM = """You extract structured hiring requirements from a job posting. Postings may be in Chinese or English.
 
@@ -13,7 +16,9 @@ Rules:
 - `skill`: a short canonical English name (e.g. 向量資料庫 -> "Vector Database", K8s -> "Kubernetes", 大型語言模型 -> "LLM").
 - `original_text`: copy the exact phrase from the posting that mentions this skill. Do not translate it.
 - `required`: true for must-have requirements; false for items marked as preferred, nice to have, 加分, 者佳, or similar.
-- Include technical skills, tools, and concrete abilities (e.g. "Requirement Analysis", "Technical Writing"). Skip generic personality traits such as passion, curiosity, or being a team player.
+- Read the whole posting, including the job description / responsibilities (工作內容), not only the qualifications. Technologies, tools, and techniques the role works with are requirements too (e.g. "開發 AI Agent、串接 MCP" -> "AI Agent", "MCP"). Mark them required=true unless the posting marks them as preferred.
+- Include technical skills, tools, and concrete professional abilities (e.g. "Requirement Analysis", "Technical Writing").
+- Skip soft skills and generic traits: teamwork, collaboration, communication, problem solving, analytical thinking, learning ability, passion, curiosity. Skip data formats such as JSON or YAML.
 - Do not add skills that the posting does not mention.
 - `min_years`: the minimum years of experience if stated, otherwise null.
 - `responsibilities`: short summaries of the main duties, at most 8."""
@@ -33,20 +38,43 @@ def read_job(path: str | Path) -> tuple[dict, str]:
     return meta, body.strip()
 
 
-def extract_requirements(path: str | Path) -> tuple[JobRequirements, dict]:
-    meta, body = read_job(path)
-    user = f"Job title: {meta.get('title', '')}\nCompany: {meta.get('company', '')}\n\nJob posting:\n{body}"
+def extract_from_text(text: str, title: str = "", company: str = "", client=None) -> tuple[JobRequirements, dict]:
+    """直接收職缺文字（網頁版會用這個）。"""
+    user = f"Job title: {title}\nCompany: {company}\n\nJob posting:\n{text}"
     job, stats = call_structured(
         system=SYSTEM,
         user=user,
         schema=JobRequirements,
-        tool_name="record_job_requirements",
-        tool_description="Record the structured requirements extracted from the job posting.",
+        name="extract",
+        model=model_for("extract"),
+        client=client,
     )
-    # 職稱和公司以檔案開頭的欄位為準，不用模型猜的
-    job.title = meta.get("title") or job.title
-    job.company = meta.get("company") or job.company
+    # 職稱和公司以使用者給的為準，不用模型猜的
+    job.title = title or job.title
+    job.company = company or job.company
     return job, stats
+
+
+def cache_path(path: str | Path, model: str) -> Path:
+    """快取檔名 = 職缺檔名 + 指紋。職缺內容、拆解模型、拆解規則（SYSTEM）任何一個改了，指紋就變 → 自動重拆。"""
+    fingerprint = hashlib.sha256((model + SYSTEM + Path(path).read_text(encoding="utf-8")).encode()).hexdigest()[:8]
+    return CACHE_DIR / f"{Path(path).stem}_{fingerprint}.json"
+
+
+def extract_requirements(path: str | Path, use_cache: bool = True, client=None) -> tuple[JobRequirements, dict]:
+    """讀職缺檔 → 拆解。同一份職缺拆過就直接讀快取，不再花錢、結果也固定。"""
+    model = model_for("extract")
+    cache = cache_path(path, model)
+    if use_cache and cache.exists():
+        job = JobRequirements.model_validate_json(cache.read_text(encoding="utf-8"))
+        return job, {"model": model, "input_tokens": 0, "output_tokens": 0,
+                     "cost_usd": 0.0, "seconds": 0.0, "cached": True}
+
+    meta, body = read_job(path)
+    job, stats = extract_from_text(body, meta.get("title", ""), meta.get("company", ""), client)
+    CACHE_DIR.mkdir(exist_ok=True)
+    cache.write_text(job.model_dump_json(indent=2), encoding="utf-8")
+    return job, {**stats, "cached": False}
 
 
 def print_summary(job: JobRequirements, stats: dict) -> None:
@@ -58,7 +86,8 @@ def print_summary(job: JobRequirements, stats: dict) -> None:
     print("-" * 60)
     print(f"requirements: {len(job.requirements)}  "
           f"(必備 {sum(r.required for r in job.requirements)} / 加分 {sum(not r.required for r in job.requirements)})")
-    print(f"tokens: in {stats['input_tokens']} / out {stats['output_tokens']}  "
+    print(f"model: {stats['model']}{'（快取）' if stats['cached'] else ''}  "
+          f"tokens: in {stats['input_tokens']} / out {stats['output_tokens']}  "
           f"cost: ${stats['cost_usd']:.4f}  time: {stats['seconds']}s")
 
 

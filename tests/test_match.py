@@ -1,5 +1,4 @@
 from pathlib import Path
-from types import SimpleNamespace
 
 from job_agent.match import dedupe, exact_match, match
 from job_agent.schemas import JobRequirements, Profile, Requirement
@@ -13,21 +12,6 @@ def req(skill, required=True):
 
 def job(*reqs):
     return JobRequirements(title="AI Engineer", requirements=list(reqs))
-
-
-class FakeClient:
-    """假的 Claude：回傳指定的 mapping；被呼叫幾次記在 calls。"""
-
-    def __init__(self, mappings):
-        block = SimpleNamespace(type="tool_use", input={"mappings": mappings})
-        usage = SimpleNamespace(input_tokens=1000, output_tokens=200)
-        self.response = SimpleNamespace(content=[block], usage=usage, stop_reason="tool_use")
-        self.messages = self
-        self.calls = 0
-
-    def create(self, **kwargs):
-        self.calls += 1
-        return self.response
 
 
 # A. 去重
@@ -46,8 +30,8 @@ def test_exact_match_uses_name_and_aliases():
 
 
 # 全部名稱都對上 → 不呼叫 LLM、不花錢；D 段狀態規則
-def test_all_exact_skips_llm_and_sets_status():
-    client = FakeClient([])
+def test_all_exact_skips_llm_and_sets_status(fake):
+    client = fake({"mappings": []})
     results, stats = match(job(req("Python"), req("Docker")), PROFILE, client)
     assert client.calls == 0 and stats["cost_usd"] == 0
     python, docker = results
@@ -57,14 +41,14 @@ def test_all_exact_skips_llm_and_sets_status():
 
 
 # C + D：LLM 的回答經過程式檢查
-def test_semantic_mapping_is_checked(tmp_path, monkeypatch):
+def test_semantic_mapping_is_checked(tmp_path, monkeypatch, fake):
     monkeypatch.chdir(tmp_path)  # 軌跡檔存到暫存資料夾
-    client = FakeClient([
+    client = fake({"mappings": [
         {"requirement_skill": "Containerization", "profile_skill": "Docker", "relation": "same", "reason": "x"},
         {"requirement_skill": "PyTorch", "profile_skill": "Reinforcement Learning", "relation": "related", "reason": "x"},
         {"requirement_skill": "Kubernetes", "profile_skill": "Kubernetes", "relation": "same", "reason": "瞎掰"},
         {"requirement_skill": "Go", "profile_skill": None, "relation": "none", "reason": "x"},
-    ])
+    ]})
     results, stats = match(
         job(req("Containerization"), req("PyTorch"), req("Kubernetes"), req("Go"), req("Rust")),
         PROFILE, client,

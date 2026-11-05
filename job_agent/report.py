@@ -88,7 +88,8 @@ def to_markdown(report: GapReport, stats: dict | None = None) -> str:
         )
 
     if stats:
-        lines += ["", f"_費用：US${stats['cost_usd']:.4f}，名稱直接對上 {stats['exact']} 項、LLM 判斷 {stats['semantic']} 項_"]
+        model = stats.get("model", "沒有呼叫 LLM")
+        lines += ["", f"_費用：US${stats['cost_usd']:.4f}，名稱直接對上 {stats['exact']} 項、LLM 判斷 {stats['semantic']} 項（比對模型：{model}）_"]
     return "\n".join(lines) + "\n"
 
 

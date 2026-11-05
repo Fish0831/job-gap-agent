@@ -74,6 +74,8 @@ class MatchResult(BaseModel):
     evidence: list[str] = Field(default_factory=list)
     level: Level | None = None
     reason: str = ""
+    how: Literal["name", "same", "related", "none"] = "none"  # name = 程式名稱對上；其他是 LLM 的判斷
+    matched_to: str | None = None  # 對應到 profile 的哪個技能
 
 
 class GapReport(BaseModel):
