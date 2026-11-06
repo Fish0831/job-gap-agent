@@ -1,32 +1,103 @@
 # job-gap-agent
 
-Paste a job posting and get a gap report: which required skills I can already prove with my own projects, which are only partial, which are missing, and what to learn next.
+Paste job postings, get two reports:
 
-**Status:** work in progress — v1 (command-line gap report) targeted for 2026-11-08. See the [design doc](docs/design.md) (in Traditional Chinese).
+- **Gap report (per job)** — which skills I can prove with real projects, which are only partial, which are missing, and what to work on first.
+- **Market gap report (across jobs)** — stack many postings together and count which skills are required most often while I still lack them. Ranking is computed in code, not by the LLM.
 
-## How it works (v1)
+Design doc (Traditional Chinese): [docs/design.md](docs/design.md)
 
-1. **Extract** — an LLM turns a job posting (Chinese or English) into structured requirements, validated with Pydantic.
-2. **Match** — each requirement is compared with my skill profile (`profile.yaml`). A skill only counts as "have" if it points to a real project as evidence; evidence IDs are checked in code so the model cannot invent experience.
-3. **Report** — a Markdown gap report with the top skills to work on next.
+## How it works
 
-## Setup
+```
+job posting ─► ① Extract (LLM, structured output, cached) ─► requirements
+                                                                │
+profile.yaml ───────────────────────────────────────────────────┤
+                                                                ▼
+             ③ Match: A clean up names (code) → B exact name match (code)
+                      → C semantic mapping (LLM) → D decide status (code)
+                                                                │
+                      ④ Gap report per job (code) ◄─────────────┤
+                      ⑤ Market gap report across jobs (code) ◄──┘
+```
 
-Requires Python 3.10+.
+- **The LLM only does semantic judgement.** Name clean-up (synonyms table, spelling differences, soft-skill filter), status rules, ranking and reports are plain Python and covered by tests.
+- **No evidence, no "have".** A skill only counts as "have" when it points to a project listed in `profile.yaml`. The LLM never outputs evidence; it is copied from the profile in code.
+- **Structured outputs.** Pydantic model → JSON Schema in `output_config.format` → validated again with `model_validate_json()`.
+- **Extraction cache.** Each extracted posting is cached under a fingerprint of model + extraction rules + posting text; change any of them and it is re-extracted automatically.
+
+## First-time setup
+
+Requires Python 3.10+ and an Anthropic API key.
 
 ```bash
+git clone https://github.com/Fish0831/job-gap-agent.git
+cd job-gap-agent
 python -m venv .venv
-source .venv/Scripts/activate   # Windows (Git Bash / MSYS2); use .venv/bin/activate on Linux/macOS
+source .venv/Scripts/activate        # Windows Git Bash; PowerShell: .venv\Scripts\Activate.ps1; Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt
-cp profile.example.yaml profile.yaml   # then fill in your own projects and skills
+cp profile.example.yaml profile.yaml # then fill in your own projects (evidence) and skills
 ```
+
+Create a `.env` file in the project folder:
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+## Every time
+
+1. Save each job posting as a text file in `jobs/`, e.g. `jobs/11.txt`:
+
+   ```
+   title: AI Engineer
+   company: ACME
+   ---
+   (paste the whole posting here)
+   ```
+
+2. Run:
+
+   ```bash
+   python -m job_agent jobs/11.txt          # one posting
+   python -m job_agent jobs --market        # every posting in jobs/ + the market gap report
+   ```
+
+3. Open the reports in `reports/` (`<job>_<time>.md` and `market_<time>.md`).
+
+Other options: `--profile my.yaml` (another skill profile), `--no-cache` (re-extract postings).
+
+Skill names that mean the same thing (e.g. `OpenAI API`, `Gemini API` → `LLM API Integration`) are unified with [`skill_synonyms.yaml`](skill_synonyms.yaml). Add a line there when you see duplicates in the market report.
+
+## Models and cost
+
+Both steps default to `claude-haiku-5-5`. To switch, add to `.env`:
+
+```
+EXTRACT_MODEL=claude-sonnet-5-5
+MATCH_MODEL=claude-sonnet-5-5
+```
+
+Only models with a price in `PRICES` (`job_agent/llm.py`) are accepted, so the per-call cost limit ($0.20) always works.
+
+Measured with Haiku on 10 real postings (2026-11): about **$0.0025 per posting** for the first run (extract + match), and about $0.001 per posting afterwards (extraction is cached). A 10-posting market report costs about $0.01–0.03.
+
+Compare models on one posting (same cached extraction, only the matching model changes):
+
+```bash
+python -m job_agent.compare jobs/02.txt
+```
+
+On 3 postings, matching with Sonnet cost ~13× Haiku and was more lenient; the remaining differences were borderline skills, about the same size as re-running one model twice. So Haiku is the default.
 
 ## Tests
 
 ```bash
-python -m pytest -v
+python -m pytest -q
 ```
+
+Tests use a fake Claude client: no network, no cost.
 
 ## Privacy
 
-`jobs/` (raw job postings) and `profile.yaml` (personal skill profile) are git-ignored. `profile.example.yaml` shows the format.
+`jobs/`, `profile.yaml`, `.env`, `cache/`, `reports/` and `trajectories/` are git-ignored. `profile.example.yaml` shows the profile format.

@@ -1,6 +1,6 @@
 import pytest
 
-from job_agent.normalize import SYNONYMS_FILE, canonical, key, load_synonyms, unify
+from job_agent.normalize import SYNONYMS_FILE, canonical, drop_soft, key, load_synonyms, unify
 from job_agent.schemas import Requirement
 
 
@@ -46,3 +46,19 @@ def test_unify_keeps_original_text():
 def test_repo_synonyms_file_loads():
     syn = load_synonyms(SYNONYMS_FILE)  # 公開的 skill_synonyms.yaml 格式正確、沒有重複
     assert canonical("Claude API", syn) == "LLM API Integration"
+
+# 軟實力：程式的第二道防線
+def test_drop_soft_removes_soft_category_and_listed_names():
+    reqs = [
+        Requirement(skill="Analytical Problem Solving", original_text="x", category="other", required=True),
+        Requirement(skill="Mentoring", original_text="x", category="soft", required=True),
+        Requirement(skill="Requirement Analysis", original_text="x", category="other", required=True),
+    ]
+    assert [r.skill for r in drop_soft(reqs)] == ["Requirement Analysis"]
+
+
+# 拆解偶爾把舉例寫進技能名稱 → 去掉括號，才能和同一個技能合併
+def test_canonical_drops_examples_in_parentheses():
+    assert canonical("Vector Database (Chroma, Qdrant, Milvus)", {}) == "Vector Database"
+    assert canonical("向量資料庫（Chroma）", {}) == "向量資料庫"
+    assert canonical("(only brackets)", {}) == "(only brackets)"  # 去掉後變空的 → 保留原樣

@@ -1,6 +1,6 @@
 """③ 比對：JobRequirements + Profile → list[MatchResult]。
 
-A. 統一名稱＋去重（程式）同義詞表換成統一名稱（normalize.py），同一個技能只留一筆，有必備就算必備
+A. 整理（程式）       去掉軟實力 → 同義詞表換成統一名稱（normalize.py）→ 同一個技能只留一筆，有必備就算必備
 B. 名稱完全對上（程式） 職缺技能 = profile 的 name 或 aliases（寫法差異、同義詞都算）→ 不呼叫 LLM
 C. 語意對應（LLM）     剩下的一次丟給 Claude：對應到哪個 profile 技能、same / related / none
 D. 檢查＋決定狀態（程式）LLM 給的技能名稱要真的存在；evidence 和 level 從 profile 複製
@@ -12,7 +12,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from job_agent.llm import call_structured, model_for
-from job_agent.normalize import canonical, key, load_synonyms, unify
+from job_agent.normalize import canonical, drop_soft, key, load_synonyms, unify
 from job_agent.schemas import JobRequirements, MatchResult, Profile, ProfileSkill, Requirement
 
 Relation = Literal["same", "related", "none"]
@@ -133,7 +133,7 @@ def match(job: JobRequirements, profile: Profile, client=None, model: str | None
     """model：比對用哪個模型；不給就照 MATCH_MODEL 設定（模型比較工具會指定）。
     synonyms：同義詞表；不給就讀 skill_synonyms.yaml。"""
     synonyms = load_synonyms() if synonyms is None else synonyms
-    reqs = dedupe(unify(job.requirements, synonyms))
+    reqs = dedupe(unify(drop_soft(job.requirements), synonyms))
     matched, unmatched = exact_match(reqs, profile, synonyms)
 
     mappings: dict[str, SkillMapping] = {}
