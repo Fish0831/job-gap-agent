@@ -1,7 +1,7 @@
 """③ 比對：JobRequirements + Profile → list[MatchResult]。
 
-A. 去重（程式）       同一個技能只留一筆，有必備就算必備
-B. 名稱完全對上（程式） 職缺技能 = profile 的 name 或 aliases → 不呼叫 LLM
+A. 統一名稱＋去重（程式）同義詞表換成統一名稱（normalize.py），同一個技能只留一筆，有必備就算必備
+B. 名稱完全對上（程式） 職缺技能 = profile 的 name 或 aliases（寫法差異、同義詞都算）→ 不呼叫 LLM
 C. 語意對應（LLM）     剩下的一次丟給 Claude：對應到哪個 profile 技能、same / related / none
 D. 檢查＋決定狀態（程式）LLM 給的技能名稱要真的存在；evidence 和 level 從 profile 複製
 """
@@ -12,6 +12,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from job_agent.llm import call_structured, model_for
+from job_agent.normalize import canonical, key, load_synonyms, unify
 from job_agent.schemas import JobRequirements, MatchResult, Profile, ProfileSkill, Requirement
 
 Relation = Literal["same", "related", "none"]
@@ -44,42 +45,45 @@ For each requirement skill, pick at most one skill from the candidate's list and
 Rules:
 - Return exactly one mapping per requirement skill, copying requirement_skill exactly.
 - profile_skill must be copied exactly from the candidate's list. Never invent a skill.
+- Aliases only show other names of the SAME skill. Do not choose "same" just because an alias contains a similar word (e.g. requirement "Open-source LLM" vs a candidate skill whose alias mentions "LLM" is at most "related"). Use "same" only when the requirement and the candidate skill are truly the same skill.
 - Be conservative: if unsure between "same" and "related", choose "related"; if unsure between "related" and "none", choose "none".
 - Judge only whether the skills match, not how good the candidate is.
 - Write `reason` in Traditional Chinese (繁體中文), one short sentence. Keep skill names in English."""
 
 
-# ===== A. 去重 =====
+# ===== A. 統一名稱＋去重 =====
 
 def dedupe(requirements: list[Requirement]) -> list[Requirement]:
-    """同一個 skill（不分大小寫）只留一筆；只要有一筆是必備，就算必備。"""
+    """同一個 skill（寫法差異不算，見 normalize.key）只留一筆；只要有一筆是必備，就算必備。"""
     kept: dict[str, Requirement] = {}
     for r in requirements:
-        key = r.skill.strip().lower()
-        if key not in kept:
-            kept[key] = r
-        elif r.required and not kept[key].required:
-            kept[key] = r  # 換成必備那一筆（original_text 也跟著換）
+        k = key(r.skill)
+        if k not in kept:
+            kept[k] = r
+        elif r.required and not kept[k].required:
+            kept[k] = r  # 換成必備那一筆（original_text 也跟著換）
     return list(kept.values())
 
 
 # ===== B. 名稱完全對上 =====
 
-def build_index(profile: Profile) -> dict[str, ProfileSkill]:
-    """把 name 和每個 alias 都轉小寫，指到同一個 ProfileSkill。"""
+def build_index(profile: Profile, synonyms: dict[str, str] | None = None) -> dict[str, ProfileSkill]:
+    """name 和每個 alias（原本的寫法＋統一後的名稱）都轉成 key，指到同一個 ProfileSkill。"""
+    synonyms = synonyms or {}
     index = {}
     for s in profile.skills:
         for name in [s.name, *s.aliases]:
-            index[name.strip().lower()] = s
+            index[key(name)] = s
+            index.setdefault(key(canonical(name, synonyms)), s)  # profile 寫 K8s 也能對上職缺的 Kubernetes
     return index
 
 
-def exact_match(requirements, profile) -> tuple[dict[str, ProfileSkill], list[Requirement]]:
+def exact_match(requirements, profile, synonyms: dict[str, str] | None = None) -> tuple[dict[str, ProfileSkill], list[Requirement]]:
     """回傳（對上的：職缺技能 → ProfileSkill, 沒對上的需求）。"""
-    index = build_index(profile)
+    index = build_index(profile, synonyms)
     matched, unmatched = {}, []
     for r in requirements:
-        hit = index.get(r.skill.strip().lower())
+        hit = index.get(key(r.skill))
         if hit:
             matched[r.skill] = hit
         else:
@@ -124,17 +128,20 @@ def decide(req: Requirement, skill: ProfileSkill | None, how: str, reason: str) 
     )
 
 
-def match(job: JobRequirements, profile: Profile, client=None, model: str | None = None) -> tuple[list[MatchResult], dict]:
-    """model：比對用哪個模型；不給就照 MATCH_MODEL 設定（模型比較工具會指定）。"""
-    reqs = dedupe(job.requirements)
-    matched, unmatched = exact_match(reqs, profile)
+def match(job: JobRequirements, profile: Profile, client=None, model: str | None = None,
+          synonyms: dict[str, str] | None = None) -> tuple[list[MatchResult], dict]:
+    """model：比對用哪個模型；不給就照 MATCH_MODEL 設定（模型比較工具會指定）。
+    synonyms：同義詞表；不給就讀 skill_synonyms.yaml。"""
+    synonyms = load_synonyms() if synonyms is None else synonyms
+    reqs = dedupe(unify(job.requirements, synonyms))
+    matched, unmatched = exact_match(reqs, profile, synonyms)
 
     mappings: dict[str, SkillMapping] = {}
     stats = {"cost_usd": 0.0, "llm_called": False, "exact": len(matched), "semantic": len(unmatched)}
     if unmatched:  # 全部都對上就不花錢
         result, llm_stats = semantic_map(unmatched, profile, client, model)
         stats.update(llm_stats, llm_called=True)
-        mappings = {m.requirement_skill.strip().lower(): m for m in result.mappings}
+        mappings = {key(m.requirement_skill): m for m in result.mappings}
 
     by_name = {s.name: s for s in profile.skills}
     results = []
@@ -143,7 +150,7 @@ def match(job: JobRequirements, profile: Profile, client=None, model: str | None
             skill = matched[r.skill]
             results.append(decide(r, skill, "name", f"名稱對上 {skill.name}"))
             continue
-        m = mappings.get(r.skill.strip().lower())
+        m = mappings.get(key(r.skill))
         if m is None:
             results.append(decide(r, None, "none", "LLM 沒有回這個技能"))
         elif m.relation != "none" and m.profile_skill not in by_name:

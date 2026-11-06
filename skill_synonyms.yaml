@@ -1,0 +1,28 @@
+# 技能名稱統一表（程式查表，不靠 LLM）
+#
+# 格式：統一後的名稱: [會被換成它的其他寫法]
+# - 大小寫、空白、-、_、. 的差異程式會自動處理，不用寫進來
+#   （Scikit-Learn ＝ scikit-learn ＝ scikit learn，Node.js ＝ NodeJS）
+# - 只放「真的是同一個技能」的寫法；相關但不同的技能（例如 LangChain 和 AI Agent）不要放
+# - 統一後的名稱最好和 profile.yaml 的技能名稱一樣，這樣程式就能直接對上、不用問 LLM
+
+LLM API Integration:
+  - OpenAI API
+  - Claude API
+  - Anthropic API
+  - Gemini API
+  - Azure OpenAI
+  - LLM API
+  - LLM APIs
+  - Cloud LLM API
+
+LLM: [Large Language Model, Large Language Models, LLMs]
+RAG: [Retrieval-Augmented Generation, Retrieval Augmented Generation]
+Kubernetes: [K8s]
+Machine Learning: [ML]
+Deep Learning: [DL]
+Natural Language Processing: [NLP]
+Computer Vision: [CV]
+CI/CD: [CICD, Continuous Integration, Continuous Deployment]
+AWS: [Amazon Web Services]
+GCP: [Google Cloud Platform, Google Cloud]

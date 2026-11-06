@@ -12,7 +12,9 @@ CACHE_DIR = Path("cache")
 SYSTEM = """You extract structured hiring requirements from a job posting. Postings may be in Chinese or English.
 
 Rules:
-- One item per skill. Split lists: "Python、C# 或任一後端語言" becomes separate items for Python and C#.
+- One item per skill. Split lists of DIFFERENT skills: "Python、C# 或任一後端語言" becomes separate items for Python and C#.
+- But MERGE examples of the SAME kind of thing into one general skill. When a posting names examples in parentheses or after 如／例如／e.g./such as (vendors, providers, or products that serve the same purpose), output ONE item for the general skill, not one item per example. Keep the examples in original_text. E.g. "串接雲端 LLM（OpenAI、Claude、Gemini）" -> one item "LLM API Integration"; "向量資料庫（如 Pinecone、Milvus）" -> one item "Vector Database".
+- How to tell them apart: if someone who knows one item could use the others within a few days (same kind of API or service), merge; if each item is a separate skill to learn (programming languages, different frameworks such as PyTorch vs TensorFlow), split.
 - `skill`: a short canonical English name (e.g. 向量資料庫 -> "Vector Database", K8s -> "Kubernetes", 大型語言模型 -> "LLM").
 - `original_text`: copy the exact phrase from the posting that mentions this skill. Do not translate it.
 - `required`: true for must-have requirements; false for items marked as preferred, nice to have, 加分, 者佳, or similar.

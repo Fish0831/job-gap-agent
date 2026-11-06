@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from job_agent.match import dedupe, exact_match, match
+from job_agent.normalize import key
 from job_agent.schemas import JobRequirements, Profile, Requirement
 
 PROFILE = Profile.from_yaml(Path(__file__).parent.parent / "profile.example.yaml")
@@ -62,3 +63,21 @@ def test_semantic_mapping_is_checked(tmp_path, monkeypatch, fake):
     assert status["Rust"] == "missing"              # LLM 漏回 → 當作沒有
     related = next(m for m in results if m.skill == "PyTorch")
     assert related.evidence == ["master-thesis"] and related.level == "strong"
+
+# A. 統一名稱：三家 API 變成一個技能，而且名稱直接對上 profile（不問 LLM）
+def test_synonyms_merge_examples_and_match_by_name(fake):
+    client = fake({"mappings": []})
+    syn = {key("OpenAI API"): "Python", key("Gemini API"): "Python"}  # 用範例 profile 有的技能來測
+    results, stats = match(job(req("OpenAI API"), req("Gemini API", required=False), req("python")), PROFILE, client,
+                           synonyms=syn)
+    assert client.calls == 0
+    assert len(results) == 1 and results[0].skill == "Python" and results[0].required is True
+    assert results[0].how == "name"
+
+
+# B. 寫法差異（大小寫、-、空白）也算名稱對上
+def test_exact_match_ignores_spelling_differences():
+    matched, unmatched = exact_match([req("reinforcement-learning"), req("Fast API")], PROFILE, {})
+    assert matched["reinforcement-learning"].name == "Reinforcement Learning"
+    assert matched["Fast API"].name == "FastAPI"
+    assert unmatched == []
