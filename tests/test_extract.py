@@ -94,3 +94,15 @@ def test_cache_fingerprint_changes_with_content_model_and_rules(tmp_path, monkey
     monkeypatch.undo()
     f.write_text("title: x\n---\n熟悉 Python 與 SQL\n", encoding="utf-8")
     assert cache_path(f, "claude-haiku-5-5") != base           # 改職缺內容
+
+
+def test_cache_fingerprint_changes_when_schema_changes(tmp_path, monkeypatch):
+    f = tmp_path / "02.txt"
+    f.write_text("title: x\n---\n熟悉 Python\n", encoding="utf-8")
+    base = cache_path(f, "claude-haiku-5-5")
+
+    class NewRequirements(JobRequirements):   # 假裝在 schemas.py 加了一個欄位
+        location: str | None = None
+
+    monkeypatch.setattr(extract, "JobRequirements", NewRequirements)
+    assert cache_path(f, "claude-haiku-5-5") != base           # 改資料格式 → 舊快取不用

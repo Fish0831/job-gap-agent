@@ -1,6 +1,7 @@
 """① 拆解職缺：職缺文字檔 → JobRequirements。"""
 
 import hashlib
+import json
 import sys
 from pathlib import Path
 
@@ -58,8 +59,12 @@ def extract_from_text(text: str, title: str = "", company: str = "", client=None
 
 
 def cache_path(path: str | Path, model: str) -> Path:
-    """快取檔名 = 職缺檔名 + 指紋。職缺內容、拆解模型、拆解規則（SYSTEM）任何一個改了，指紋就變 → 自動重拆。"""
-    fingerprint = hashlib.sha256((model + SYSTEM + Path(path).read_text(encoding="utf-8")).encode()).hexdigest()[:8]
+    """快取檔名 = 職缺檔名 + 指紋。
+    職缺內容、拆解模型、拆解規則（SYSTEM）、資料格式（JobRequirements）任何一個改了，指紋就變 → 自動重拆。"""
+    schema = json.dumps(JobRequirements.model_json_schema(), sort_keys=True)  # 改 schemas.py 的欄位也算
+    fingerprint = hashlib.sha256(
+        (model + SYSTEM + schema + Path(path).read_text(encoding="utf-8")).encode()
+    ).hexdigest()[:8]
     return CACHE_DIR / f"{Path(path).stem}_{fingerprint}.json"
 
 
