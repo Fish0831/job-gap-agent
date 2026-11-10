@@ -67,6 +67,20 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 Other options: `--profile my.yaml` (another skill profile), `--no-cache` (re-extract postings).
 
+## Resume → profile draft
+
+Don't want to write `profile.yaml` by hand? Turn a resume (`.pdf`, `.docx`, `.txt`, `.md`) into a draft:
+
+```bash
+python -m job_agent.resume resumes/my_resume.pdf                        # draft → reports/profile_draft_<time>.yaml
+python -m job_agent.resume resumes/my_resume.pdf --compare profile.yaml # also compare with a hand-written profile
+python -m job_agent jobs --market --profile reports/profile_draft_<time>.yaml
+```
+
+- Only concrete projects, jobs, research and awards become evidence. A skill that only appears in the skills section gets no evidence, so it shows up as "partial".
+- The draft is conservative: `basic` by default, `working` at most. Review it before use.
+- Code cleans up the LLM draft (soft skills, synonyms, duplicates, unknown evidence ids). Resume text is never saved to `trajectories/`, and `resumes/` is git-ignored.
+
 Skill names that mean the same thing (e.g. `OpenAI API`, `Gemini API` → `LLM API Integration`) are unified with [`skill_synonyms.yaml`](skill_synonyms.yaml). Add a line there when you see duplicates in the market report.
 
 ## Models and cost

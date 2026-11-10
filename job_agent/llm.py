@@ -59,8 +59,10 @@ def call_structured(
     model: str = DEFAULT_MODEL,
     max_tokens: int = 8000,
     client: Anthropic | None = None,
+    save_trajectory: bool = True,
 ) -> tuple[BaseModel, dict]:
-    """要求 Claude 用指定的 Pydantic 格式回答，回傳（通過檢查的物件, 用量紀錄）。"""
+    """要求 Claude 用指定的 Pydantic 格式回答，回傳（通過檢查的物件, 用量紀錄）。
+    save_trajectory=False：不存執行軌跡（履歷這類個資）。環境變數 SAVE_TRAJECTORIES=0 會關掉全部（網頁版用）。"""
     if model not in PRICES:
         raise LLMError(f"unknown model {model!r}: add its price to PRICES in llm.py first")
     client = client or Anthropic()
@@ -86,7 +88,8 @@ def call_structured(
 
     # 模型可能先思考（thinking 區塊），答案在 text 區塊
     text = next((block.text for block in response.content if block.type == "text"), None)
-    _save_trajectory(name, model, system, user, text, stats)
+    if save_trajectory and os.getenv("SAVE_TRAJECTORIES", "1") != "0":
+        _save_trajectory(name, model, system, user, text, stats)
 
     if stats["cost_usd"] > MAX_COST_PER_CALL:
         raise LLMError(f"cost ${stats['cost_usd']} exceeds limit ${MAX_COST_PER_CALL}")

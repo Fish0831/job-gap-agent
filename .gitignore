@@ -10,6 +10,7 @@ __pycache__/
 # 個人資料：不公開
 jobs/
 profile.yaml
+resumes/
 
 # 執行產生的檔案
 reports/
@@ -17,3 +18,5 @@ trajectories/
 
 # 拆解結果快取（含職缺內容）
 cache/
+.vscode/
+.vscode/

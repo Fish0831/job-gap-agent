@@ -31,6 +31,8 @@ def fake():
 
 @pytest.fixture(autouse=True)
 def default_models(monkeypatch):
-    """測試一律用預設模型，不受 .env 或終端機裡 EXTRACT_MODEL／MATCH_MODEL 的影響（費用測試才會準）。"""
-    for step in ("EXTRACT", "MATCH"):
+    """測試一律用預設模型，不受 .env 或終端機裡 EXTRACT_MODEL／MATCH_MODEL／RESUME_MODEL 的影響（費用測試才會準）；
+    軌跡開關也回到預設（SAVE_TRAJECTORIES 沒設 = 存）。"""
+    for step in ("EXTRACT", "MATCH", "RESUME"):
         monkeypatch.delenv(f"{step}_MODEL", raising=False)
+    monkeypatch.delenv("SAVE_TRAJECTORIES", raising=False)
