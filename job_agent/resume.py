@@ -1,6 +1,7 @@
 """⓪ 履歷 → profile 草稿：履歷檔 → 作品（evidence）＋技能 → 可以直接拿去比對的 Profile。
 
 A. 讀檔（程式）  .pdf → pypdf、.docx → python-docx（段落＋表格）、.txt／.md 直接讀
+                 送出前遮掉 email、電話（資料最小化：比對技能用不到聯絡資料）
 B. 整理（LLM）   structured outputs 輸出 ResumeDraft：作品清單、技能清單（每個技能掛哪些作品）
 C. 清理（程式）  第二道防線：去軟實力、名稱統一、重複技能合併、id 改成 kebab-case、
                  刪掉不存在的作品 id、沒有作品的技能程度一律 basic
@@ -16,6 +17,7 @@ D. 檢查（程式）  組成 Profile 時 model_validator 再檢查一次「證�
 """
 
 import argparse
+import io
 import re
 import sys
 import unicodedata
@@ -83,22 +85,30 @@ Skills:
 # ===== A. 讀檔 =====
 
 def read_resume(path: str | Path) -> str:
-    """讀履歷 → 純文字。"""
+    """讀履歷檔 → 純文字（CLI 用）。"""
     path = Path(path)
-    suffix = path.suffix.lower()
+    return read_resume_bytes(path.read_bytes(), path.name)
+
+
+def read_resume_bytes(data: bytes, filename: str) -> str:
+    """收檔案內容（bytes）＋檔名 → 純文字。網頁上傳的檔案沒有路徑，只有內容，所以兩邊都用這個。"""
+    suffix = Path(filename).suffix.lower()
     if suffix == ".pdf":
-        text = "\n".join(page.extract_text() or "" for page in PdfReader(path).pages)
+        text = "\n".join(page.extract_text() or "" for page in PdfReader(io.BytesIO(data)).pages)
     elif suffix == ".docx":
-        text = _read_docx(path)
+        text = _read_docx(io.BytesIO(data))
     elif suffix in (".txt", ".md"):
-        text = path.read_text(encoding="utf-8")
+        try:
+            text = data.decode("utf-8")
+        except UnicodeDecodeError:
+            raise ValueError(f"{filename}：文字檔請存成 UTF-8 編碼") from None
     else:
-        raise ValueError(f"{path.name}：只支援 .pdf、.docx、.txt、.md（舊版 .doc 請另存成 .docx）")
+        raise ValueError(f"{filename}：只支援 .pdf、.docx、.txt、.md（舊版 .doc 請另存成 .docx）")
     return check_text(text)
 
 
-def _read_docx(path: Path) -> str:
-    doc = Document(path)
+def _read_docx(file) -> str:
+    doc = Document(file)
     lines = [p.text for p in doc.paragraphs]
     for table in doc.tables:  # 很多履歷用表格排版，只讀段落會漏掉
         for row in table.rows:
@@ -115,6 +125,22 @@ def check_text(text: str) -> str:
     if len(text) > MAX_CHARS:
         raise ValueError(f"履歷有 {len(text)} 個字，超過上限 {MAX_CHARS}")
     return text
+
+
+# 聯絡資料：比對技能用不到，送給 LLM 之前先遮掉（資料最小化）
+_EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+_PHONE = re.compile(
+    r"(?:\(?\+?\d{1,4}\)?[\s-]?)?\d{2,4}[\s-]\d{3,4}[\s-]\d{3,4}"  # (+886) 920-460-831、02-2345-6789
+    r"|(?:\+?886[\s-]?|0)9\d{8}"                                     # 0912345678、+886912345678
+)
+MASK = "[已遮蔽]"
+
+
+def mask_contacts(text: str) -> tuple[str, int]:
+    """把 email、電話換成 [已遮蔽]，回傳（新文字, 遮了幾處）。"""
+    text, n_email = _EMAIL.subn(MASK, text)
+    text, n_phone = _PHONE.subn(MASK, text)
+    return text, n_email + n_phone
 
 
 # ===== C. 清理（程式的第二道防線）=====
@@ -194,7 +220,7 @@ def clean(draft: ResumeDraft, synonyms: dict[str, str] | None = None) -> tuple[P
 
 def profile_from_text(text: str, client=None, synonyms: dict[str, str] | None = None) -> tuple[Profile, list[str], dict]:
     """履歷文字 → （Profile, 清理紀錄, 用量）。"""
-    text = check_text(text)
+    text, masked = mask_contacts(check_text(text))
     draft, stats = call_structured(
         system=SYSTEM,
         user=f"<resume>\n{text}\n</resume>",
@@ -206,6 +232,8 @@ def profile_from_text(text: str, client=None, synonyms: dict[str, str] | None = 
         save_trajectory=False,  # 履歷是個資，不存軌跡
     )
     profile, notes = clean(draft, synonyms)
+    if masked:
+        notes.insert(0, f"送出前遮掉聯絡資料 {masked} 處（email、電話）")
     return profile, notes, stats
 
 

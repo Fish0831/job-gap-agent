@@ -1,0 +1,6 @@
+# Streamlit 設定（公開）
+[server]
+maxUploadSize = 2        # 上傳檔案最大 2 MB（履歷用不到更大）
+
+[browser]
+gatherUsageStats = false # 不傳使用統計給 Streamlit

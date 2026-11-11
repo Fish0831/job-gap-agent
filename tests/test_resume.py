@@ -7,8 +7,8 @@ from docx import Document
 from pypdf import PdfWriter
 
 from job_agent.llm import call_structured
-from job_agent.resume import (ResumeDraft, check_text, compare_profiles, profile_from_text,
-                              read_resume, to_yaml)
+from job_agent.resume import (MASK, ResumeDraft, check_text, compare_profiles, mask_contacts,
+                              profile_from_text, read_resume, read_resume_bytes, to_yaml)
 from job_agent.schemas import JobRequirements, Profile
 
 FAKE_RESUME = (
@@ -76,6 +76,27 @@ def test_check_text_limits():
     assert check_text("a\n\n\n\n\nb" + "c" * 200).startswith("a\n\nb")  # 多餘空行壓成一行
 
 
+def test_read_bytes_like_an_upload():
+    assert "token-cost-estimator" in read_resume_bytes(FAKE_RESUME.encode("utf-8"), "我的履歷.txt")
+    with pytest.raises(ValueError, match="UTF-8"):  # Big5 之類的編碼 → 清楚的錯誤訊息
+        read_resume_bytes(FAKE_RESUME.encode("big5", errors="ignore"), "resume.txt")
+
+
+# ===== 遮掉聯絡資料 =====
+
+def test_mask_contacts_hides_email_and_phone():
+    text = ("E-mail: someone.name+job@gmail.com ｜ 手機: (+886) 912-345-678\n"
+            "市話 02-2345-6789、0912345678、+886912345678")
+    masked, n = mask_contacts(text)
+    assert n == 5
+    assert "@" not in masked and "345" not in masked and masked.count(MASK) == 5
+
+
+def test_mask_contacts_keeps_dates_numbers_and_links():
+    text = "2024 年 9 月 – 2026 年 6 月；500 組配對種子；US$0.0025；2025-09-20；github.com/Fish0831；TOEIC 855"
+    assert mask_contacts(text) == (text, 0)  # 不是聯絡資料的數字不能被誤遮
+
+
 # ===== B＋C. 整理＋清理 =====
 
 def test_draft_schema_works_with_structured_outputs():
@@ -102,6 +123,16 @@ def test_profile_from_text_cleans_llm_mistakes(tmp_path, monkeypatch, fake):
     assert client.last_request["model"] == "claude-haiku-5-5"
     assert FAKE_RESUME.strip() in client.last_request["messages"][0]["content"]
     assert not (tmp_path / "trajectories").exists()                                       # 履歷不存軌跡
+
+
+def test_contacts_are_masked_before_sending(tmp_path, monkeypatch, fake):
+    monkeypatch.chdir(tmp_path)
+    client = fake(DRAFT)
+    _, notes, _ = profile_from_text("聯絡：test@example.com、0912-345-678\n" + FAKE_RESUME, client=client,
+                                    synonyms=SYNONYMS)
+    sent = client.last_request["messages"][0]["content"]
+    assert "test@example.com" not in sent and "0912-345-678" not in sent  # Claude 收不到聯絡資料
+    assert "遮掉聯絡資料 2 處" in notes[0]
 
 
 def test_draft_yaml_reads_back_as_profile(fake, tmp_path, monkeypatch):

@@ -106,7 +106,8 @@ def call_structured(
 
 def _save_trajectory(name: str, model: str, system: str, user: str, text, stats: dict) -> None:
     TRAJECTORY_DIR.mkdir(exist_ok=True)
-    path = TRAJECTORY_DIR / f"{name}_{model}_{datetime.now():%Y%m%d_%H%M%S}.json"
+    # 加上微秒（%f）：網頁版會同時比對好幾份職缺，只到秒的話檔名會撞在一起、互相覆蓋
+    path = TRAJECTORY_DIR / f"{name}_{model}_{datetime.now():%Y%m%d_%H%M%S_%f}.json"
     try:
         output = json.loads(text) if text else None
     except json.JSONDecodeError:

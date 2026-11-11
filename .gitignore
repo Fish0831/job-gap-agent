@@ -18,5 +18,9 @@ trajectories/
 
 # 拆解結果快取（含職缺內容）
 cache/
+
+# 編輯器設定
 .vscode/
-.vscode/
+
+# Streamlit 的金鑰檔（部署時 key 放這裡）
+.streamlit/secrets.toml
