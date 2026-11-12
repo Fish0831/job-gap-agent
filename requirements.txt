@@ -5,4 +5,4 @@ pytest
 pyyaml
 pypdf
 python-docx
-streamlit
+streamlit>=1.67

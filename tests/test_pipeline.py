@@ -97,4 +97,7 @@ def test_app_shows_result_page(tmp_path, monkeypatch, fake):
     at.run()
     assert not at.exception
     assert len(at.tabs) == 2
-    assert any("市場缺口報告" in m.value for m in at.markdown)
+    assert [m.label for m in at.metric] == ["比對的職缺", "必備技能：有／部分／沒有", "最該先補"]  # 三張卡片，沒有費用
+    assert at.metric[2].value == "LangGraph"                    # 唯一的缺口（部分）
+    assert not any("US$" in m.value for m in at.markdown)       # 畫面上不顯示費用
+    assert len(at.dataframe) == 2                               # 樣本職缺＋完整統計

@@ -12,21 +12,25 @@
 
 import os
 import threading
+import time
 from datetime import date
 
 os.environ["SAVE_TRAJECTORIES"] = "0"  # 網頁版一律不存軌跡（個資）
 
+import altair as alt
 import streamlit as st
 from anthropic import APIError
 
 from job_agent.llm import LLMError, model_for
-from job_agent.market import aggregate, to_markdown
+from job_agent.market import SkillStat, aggregate, priority, strengths, top_gaps
 from job_agent.pipeline import analyze
 from job_agent.resume import profile_from_text, read_resume_bytes, status_of, to_yaml
 from job_agent.samples import SAMPLES_FILE, load_samples
 
 MAX_RUNS_PER_SESSION = 3
 EST_COST_PER_RUN = 0.02  # 預估每次的費用（實測約 $0.012，抓寬一點）
+STATUS_TEXT = {"have": "有", "partial": "部分", "missing": "沒有"}
+STATUS_COLOR = {"missing": "#E24B4A", "partial": "#EF9F27"}  # 長條圖：沒有＝紅、部分＝橘
 
 st.set_page_config(page_title="job-gap-agent｜履歷缺口分析", page_icon="🧭", layout="wide")
 
@@ -71,6 +75,7 @@ def get_samples():
 # ===== 分析（呼叫 job_agent）=====
 
 def run_analysis(uploaded, samples) -> dict | None:
+    start = time.perf_counter()
     with st.status("分析中…", expanded=True) as status:
         st.write("① 讀取履歷")
         text = read_resume_bytes(uploaded.getvalue(), uploaded.name)
@@ -83,8 +88,12 @@ def run_analysis(uploaded, samples) -> dict | None:
         )
         status.update(label="完成", state="complete", expanded=False)
     cost = resume_stats["cost_usd"] + match_cost
+    seconds = time.perf_counter() - start
     add_spent(cost)
-    return {"profile": profile, "notes": notes, "runs": runs, "failed": failed, "cost": cost}
+    # 只寫進伺服器 logs（Manage app 才看得到）：費用、秒數，不含任何履歷內容
+    print(f"[job-gap-agent] analysis done: cost ${cost:.4f}, {seconds:.1f}s, "
+          f"jobs {len(runs)}, failed {len(failed)}", flush=True)
+    return {"profile": profile, "notes": notes, "runs": runs, "failed": failed, "cost": cost, "seconds": seconds}
 
 
 # ===== 畫面 =====
@@ -96,40 +105,121 @@ def show_samples(samples) -> None:
         st.dataframe(
             [{"編號": jid, "職稱": j.title, "公司": j.company or "—",
               "必備技能數": sum(r.required for r in j.requirements)} for jid, j in samples],
-            hide_index=True, use_container_width=True,
+            hide_index=True, width="stretch",
         )
 
 
-def show_result(result: dict) -> None:
-    profile, runs = result["profile"], result["runs"]
-    c1, c2, c3 = st.columns(3)
-    c1.metric("作品（證據）", len(profile.evidence))
-    c2.metric("技能", len(profile.skills), f"有作品 {sum(bool(s.evidence) for s in profile.skills)}", delta_color="off")
-    c3.metric("這次費用", f"US${result['cost']:.4f}")
-    if result["failed"]:
-        st.warning(f"有 {len(result['failed'])} 份職缺比對失敗（{'、'.join(result['failed'])}），報告只包含其他 {len(runs)} 份。")
+def gap_chart(gaps: list[SkillStat]) -> alt.Chart:
+    """最該先補的技能：橫向長條圖，顏色＝我的狀態，⚠ ＝各份職缺的判斷不一致。"""
+    data = [{
+        "技能": s.skill + ("  ⚠" if not s.consistent else ""),
+        "優先度": priority(s),
+        "狀態": STATUS_TEXT[s.status],
+        "必備": len(s.required_in),
+        "加分": len(s.preferred_in),
+        "各份判斷": "、".join(f"{j} {STATUS_TEXT[st_]}" for j, st_ in sorted(s.statuses.items())),
+    } for s in gaps]
+    return (
+        alt.Chart(alt.Data(values=data))
+        .mark_bar(cornerRadiusEnd=4)
+        .encode(
+            x=alt.X("優先度:Q", title="優先度（需求分數 × 缺口權重）"),
+            y=alt.Y("技能:N", sort="-x", title=None,
+                    axis=alt.Axis(labelOverlap=False, labelLimit=220, labelFontSize=13)),  # 每個技能名稱都要顯示
+            color=alt.Color("狀態:N", scale=alt.Scale(domain=["沒有", "部分"],
+                                                       range=[STATUS_COLOR["missing"], STATUS_COLOR["partial"]]),
+                            legend=alt.Legend(orient="top", title=None)),
+            tooltip=["技能:N", "優先度:Q", "狀態:N", "必備:Q", "加分:Q", "各份判斷:N"],
+        )
+        .properties(height=max(160, 34 * len(data)))
+    )
 
+
+def show_report(runs, samples_by_id) -> None:
+    stats = aggregate(runs)
+    n = len(runs)
+    required = [s for s in stats if s.required_in]
+    counts = {k: sum(s.status == k for s in required) for k in STATUS_TEXT}
+    gaps = top_gaps(stats)
+
+    c1, c2, c3 = st.columns(3)
+    card = dict(delta_color="off", delta_arrow="off", border=True)  # 小字只是說明，不是漲跌 → 不要箭頭
+    c1.metric("比對的職缺", f"{n} 份", "台灣 AI 工程師", **card)
+    c2.metric("必備技能：有／部分／沒有", f"{counts['have']} / {counts['partial']} / {counts['missing']}",
+              "各技能跨職缺的判斷", **card)
+    c3.metric("最該先補", gaps[0].skill if gaps else "—", f"優先度 {priority(gaps[0])}" if gaps else None, **card)
+
+    with st.container(border=True):
+        st.markdown("**最該先補的技能**")
+        if gaps:
+            st.altair_chart(gap_chart(gaps), width="stretch")
+            st.caption("優先度 = 需求分數（必備 2、加分 1，逐份加總）× 缺口權重（沒有 2、部分 1）。"
+                       "⚠ = 這個技能在不同職缺被判成不同狀態（判斷不穩定），排名可能會跳動。滑鼠移到長條上可以看各份的判斷。")
+        else:
+            st.success("樣本職缺的技能你都有作品證明了。")
+
+    with st.container(border=True):
+        st.markdown("**我最有競爭力的技能**")
+        top = strengths(stats)
+        st.markdown("　".join(f":green-background[{s.skill} · {len(s.required_in)}/{n} 份必備]" for s in top)
+                    or "還沒有被多份職缺列為必備、而且有作品證明的技能。")
+
+    with st.container(border=True):
+        st.markdown("**完整統計**（點欄位名稱可以排序）")
+        st.dataframe(
+            [{
+                "技能": s.skill,
+                "必備": len(s.required_in),
+                "加分": len(s.preferred_in),
+                "我的狀態": STATUS_TEXT[s.status] + (" ⚠" if not s.consistent else ""),
+                "優先度": priority(s),
+                "出現在": "、".join(samples_by_id[j].company or j for j in s.required_in + s.preferred_in
+                                    if j in samples_by_id),
+            } for s in stats if len(s.required_in) + len(s.preferred_in) >= 2],
+            column_config={
+                "必備": st.column_config.ProgressColumn("必備（幾份）", min_value=0, max_value=n, format="%d"),
+                "優先度": st.column_config.NumberColumn("優先度", format="%d"),
+            },
+            hide_index=True, width="stretch",
+        )
+        st.caption("只列出現在 2 份以上職缺的技能。⚠ = 判斷不穩定。")
+
+
+def show_draft(result: dict) -> None:
+    profile = result["profile"]
+    st.caption("從履歷整理出來的草稿。只有出現在專案／工作／研究描述裡的技能才算「有作品」；"
+               "只列在技能欄的算「部分」。level 是模型的推測（最高只到 working），請自己確認。")
+
+    st.markdown("**作品（證據）**")
+    cols = st.columns(2)
+    for i, e in enumerate(profile.evidence):
+        with cols[i % 2].container(border=True):
+            st.markdown(f"**{e.id}**　:gray[{e.type}]")
+            st.caption(e.summary)
+
+    with_ev = [s for s in profile.skills if s.evidence]
+    without = [s for s in profile.skills if not s.evidence]
+    st.markdown(f"**有作品證明的技能**（{len(with_ev)}）")
+    st.markdown("　".join(f":green-background[{s.name} · {s.level}]" for s in with_ev) or "—")
+    st.markdown(f"**只列在技能欄的技能**（{len(without)}，報告會算「部分」）")
+    st.markdown("　".join(f":orange-background[{s.name}]" for s in without) or "—")
+
+    if result["notes"]:
+        with st.expander("程式清理紀錄"):
+            st.markdown("\n".join(f"- {n}" for n in result["notes"]))
+    st.download_button("下載草稿（profile.yaml）", to_yaml(profile), file_name="profile_draft.yaml",
+                       mime="text/yaml")
+
+
+def show_result(result: dict, samples) -> None:
+    if result["failed"]:
+        st.warning(f"有 {len(result['failed'])} 份職缺比對失敗（{'、'.join(result['failed'])}），"
+                   f"報告只包含其他 {len(result['runs'])} 份。")
     tab_report, tab_draft = st.tabs(["📊 市場缺口報告", "📝 技能草稿"])
     with tab_report:
-        st.info("⚠️ 表示同一個技能在不同職缺被判成不同狀態（判斷不穩定），排名可能會跳動，請當作參考。")
-        st.markdown(to_markdown(runs, aggregate(runs), cost_usd=result["cost"]))
+        show_report(result["runs"], dict(samples))
     with tab_draft:
-        st.caption("從履歷整理出來的草稿。只有出現在專案／工作／研究描述裡的技能才算「有作品」；"
-                   "只列在技能欄的算「部分」。level 是模型的推測（最高只到 working），請自己確認。")
-        st.subheader("作品")
-        st.dataframe([{"id": e.id, "類型": e.type, "摘要": e.summary} for e in profile.evidence],
-                     hide_index=True, use_container_width=True)
-        st.subheader("技能")
-        st.dataframe(
-            [{"技能": s.name, "level": s.level, "報告狀態": status_of(s), "作品": ", ".join(s.evidence) or "—"}
-             for s in profile.skills],
-            hide_index=True, use_container_width=True,
-        )
-        if result["notes"]:
-            with st.expander("程式清理紀錄"):
-                st.markdown("\n".join(f"- {n}" for n in result["notes"]))
-        st.download_button("下載草稿（profile.yaml）", to_yaml(profile), file_name="profile_draft.yaml",
-                           mime="text/yaml")
+        show_draft(result)
 
 
 def main() -> None:
@@ -163,7 +253,7 @@ def main() -> None:
                 st.error(f"呼叫 Claude 失敗，請稍後再試（{type(e).__name__}）")
 
     if "result" in st.session_state:  # 存在 session_state：按下載按鈕重新整理時結果不會消失
-        show_result(st.session_state["result"])
+        show_result(st.session_state["result"], samples)
 
 
 main()
