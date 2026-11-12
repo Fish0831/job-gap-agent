@@ -234,7 +234,7 @@ def main() -> None:
     samples = get_samples()
     show_samples(samples)
 
-    uploaded = st.file_uploader("上傳履歷（PDF、Word、文字檔）", type=["pdf", "docx", "txt", "md"])
+    uploaded = st.file_uploader("上傳履歷（PDF、Word、文字檔，最大 10 MB）", type=["pdf", "docx", "txt", "md"])
     st.caption("🔒 履歷不會被儲存。送給 Claude 之前，程式會先遮掉 email 和電話；結果只留在這個瀏覽器分頁，關掉就沒了。")
 
     used = st.session_state.get("runs_used", 0)
