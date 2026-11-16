@@ -1,11 +1,38 @@
 # job-gap-agent
 
+**Live demo: https://job-gap-agent.streamlit.app** — upload a resume, get a market gap report against sample AI engineering job postings in Taiwan. No sign-up, no API key.
+
 Paste job postings, get two reports:
 
 - **Gap report (per job)** — which skills I can prove with real projects, which are only partial, which are missing, and what to work on first.
 - **Market gap report (across jobs)** — stack many postings together and count which skills are required most often while I still lack them. Ranking is computed in code, not by the LLM.
 
 Design doc (Traditional Chinese): [docs/design.md](docs/design.md)
+
+## Web demo
+
+```
+upload resume ─► read file ─► mask email / phone ─► resume → skill profile draft (LLM)
+                                                              │
+samples/jobs.json (10 AI job postings, skill lists only) ─────┤
+                                                              ▼
+                          match against every posting in parallel ─► market gap report
+```
+
+- **Two tabs:** the market gap report (metric cards, a "fill these gaps first" chart, strongest skills, a sortable table) and the skill profile draft built from the resume (projects as evidence, skills with / without evidence, a YAML download).
+- **Privacy:** the resume is never stored and run traces are switched off (`SAVE_TRAJECTORIES=0`). Email addresses and phone numbers are masked in code before anything is sent to Claude.
+- **Public samples:** `samples/jobs.json` holds only job titles, companies and extracted skill lists — no posting text.
+- **Cost control** (visitors use my API key): at most 3 analyses per browser session, a site-wide daily budget, and a monthly spend limit on a dedicated Anthropic Console workspace. One analysis costs about **US$0.01**. Cost is logged on the server, not shown on the page.
+- `app.py` only draws the page. Parallel matching lives in `job_agent/pipeline.py` and is tested with a fake Claude client.
+
+Run it locally:
+
+```bash
+python -m job_agent.samples jobs        # export samples/jobs.json from your own jobs/ (skill lists only)
+python -m streamlit run app.py          # opens http://localhost:8501; reads ANTHROPIC_API_KEY from .env
+```
+
+To deploy on Streamlit Community Cloud, point it at `app.py` and put `ANTHROPIC_API_KEY` (and optionally `DAILY_BUDGET_USD`) in the app's Secrets — never in the repo.
 
 ## How it works
 
@@ -110,8 +137,8 @@ On 3 postings, matching with Sonnet cost ~13× Haiku and was more lenient; the r
 python -m pytest -q
 ```
 
-Tests use a fake Claude client: no network, no cost.
+61 tests. They use a fake Claude client (no network, no cost); the web page is tested with Streamlit's `AppTest`.
 
 ## Privacy
 
-`jobs/`, `profile.yaml`, `.env`, `cache/`, `reports/` and `trajectories/` are git-ignored. `profile.example.yaml` shows the profile format.
+`jobs/`, `profile.yaml`, `resumes/`, `.env`, `.streamlit/secrets.toml`, `cache/`, `reports/` and `trajectories/` are git-ignored. `profile.example.yaml` shows the profile format.

@@ -1,9 +1,10 @@
-# 求職 Agent 設計文件（v0.4，2026-11-10）
+# 求職 Agent 設計文件（v0.5，2026-11-16）
 
-> 專案名稱 **job-gap-agent**。
-> 範圍：v1（2026-11-06 完成）＋履歷 → profile 草稿（11/10）。之後的版本列在最後。
+> 專案名稱 **job-gap-agent**。網頁 demo：https://job-gap-agent.streamlit.app
+> 範圍：v1（2026-11-06 完成）＋履歷 → profile 草稿（11/10）＋網頁 demo（11/11–11/12 上線）。之後的版本列在最後。
 > v0.3 更新：市場缺口報告、structured outputs、拆解快取、模型比較結論、技能名稱統一。
 > v0.4 更新：履歷 → profile 草稿（⓪）與轉換評估、11 月中網頁 demo 改成「上傳履歷 → 缺口報告」、職缺 API 移到更遠的計畫、專案往 agent 發展的方向（第 15 節是設計決策紀錄）。
+> v0.5 更新：網頁 demo 上線（Streamlit：上傳履歷 → 草稿 → 和樣本職缺平行比對 → 市場缺口報告）、公開樣本職缺（只有技能清單）、送出前遮掉聯絡資料、三層費用保護、報告頁改成卡片＋圖表、畫面不顯示費用、上傳上限 10 MB、定位（主打 AI 工程師相關職缺）、下一步：擴充樣本＋職務類別。
 
 ## 1. 一句話
 
@@ -12,6 +13,10 @@
 **跨職缺的市場缺口報告（主打功能）：** 一次分析多份目標職缺，統計「哪些必備技能最常出現、我卻沒有」，用資料決定下一步學什麼。主流工具（例如 LinkedIn Job Match）是一份一份看，這是和它們最大的差別。
 
 **最終目標（11/10）：** 使用者在網頁上傳自己的履歷 → 按一下 → 看到缺口報告；接著在同一頁問 agent（「哪 3 份最適合我？」「學會 RAG 會怎樣？」「SQL 去哪裡學？」）。專案要從固定流程（workflow）發展成真正由模型決定下一步的 agent，見「之後的版本」。
+
+**定位（11/11）：** 主打「分析 **AI 工程師相關職缺**」。和其他工具的差別：① 專門做 AI 職缺；② 有作品證明才算「有」；③ 跨職缺的市場統計。（台灣就業通預計 2026 年底推出「技能配適度分析」，算是類似的功能，所以重點放在 AI 職缺和作品證據。）
+
+**目前狀態（11/12）：** 第一個里程碑「上傳履歷 → 缺口報告」已經上線（第 6 節的網頁版）。
 
 ## 2. 使用者與使用情境
 
@@ -22,7 +27,7 @@
 | 看到一個有興趣的職缺 | 存成 `jobs/xx.txt`，一個指令，幾秒鐘內知道差距在哪 |
 | 每個月檢討學習方向 | 看**市場缺口報告**：所有職缺裡哪個必備技能最常被標成「沒有」→ 下個月優先學 |
 | 準備面試 | 看報告的「證據」欄，知道每個要求該拿哪個作品來講 |
-| 別人使用（網頁版） | 上傳履歷 → 自動產生 profile 草稿 → 和樣本職缺比對 → 市場缺口報告；不用自己寫 `profile.yaml` |
+| 別人使用（網頁版，11/12 上線） | 打開網址 → 上傳履歷 → 自動產生 profile 草稿 → 和樣本職缺比對 → 市場缺口報告；不用自己寫 `profile.yaml`、不用 API key |
 
 ## 3. 輸入
 
@@ -32,6 +37,7 @@
 | 我的技能檔 | `profile.yaml`（私人，不公開；repo 裡放 `profile.example.yaml` 範例） | 列出作品／經歷（每個有 id），以及每個技能的程度和對應的作品 |
 | 同義詞表 | `skill_synonyms.yaml`（公開） | `統一名稱: [其他寫法]`，程式查表統一技能名稱 |
 | 履歷（11/10） | `.pdf`、`.docx`、`.txt`、`.md`（私人，放 `resumes/`，.gitignore） | ⓪ 轉成 profile 草稿（格式和 `profile.yaml` 一樣），檢查後可以直接用 `--profile` |
+| 樣本職缺（11/11） | `samples/jobs.json`（公開） | 網頁版比對用的 10 份職缺。由 `python -m job_agent.samples jobs` 從 `jobs/` 的拆解結果匯出，**只留職稱、公司、年資、技能名稱／類別／必備或加分**；職缺原文（`original_text`）和工作內容摘要清空 |
 
 `profile.yaml` 的樣子：
 
@@ -96,7 +102,17 @@ skills:
 - `--compare`：用和比對一樣的名稱規則，對照手寫的技能檔（兩邊都有、只在草稿、只在手寫；⚠ = 報告狀態會不一樣）
 - 用草稿跑市場報告：`python -m job_agent jobs --market --profile reports/profile_draft_<時間>.yaml`
 
-全部由程式統計，不靠 LLM：
+### 網頁版（11/11–11/12，`app.py`）
+
+| 分頁 | 內容 |
+|---|---|
+| 📊 市場缺口報告 | 三張卡片（比對的職缺數、必備技能有／部分／沒有、最該先補）→ **最該先補的技能**長條圖（沒有＝紅、部分＝橘、⚠ ＝判斷不穩定，滑鼠移上去看各份判斷）→ **我最有競爭力的技能**標籤 → **完整統計**（可以點欄位排序，「出現在」列公司名稱） |
+| 📝 技能草稿 | 作品卡片、技能分兩組（有作品證明／只列在技能欄）、程式清理紀錄、下載草稿 YAML |
+
+- 排序、統計和 CLI 的市場報告用同一套函式（`aggregate`、`priority`、`top_gaps`、`strengths`），只是畫法不同。
+- **畫面上不顯示費用**（11/12）：使用者不需要知道、也不該讓人覺得在花錢；費用和秒數只 `print` 到伺服器 logs。
+
+市場報告全部由程式統計，不靠 LLM：
 
 - **需求分數** = 必備 2 分、加分 1 分，逐份加總
 - **優先度** = 需求分數 × 缺口權重（沒有 2、部分 1、有 0）
@@ -124,7 +140,7 @@ skills:
 | 證據 id 不存在 → 刪掉並記錄 | 程式（`clean()`），最後 `Profile` 的 validator 再檢查一次 |
 | 履歷裡的文字是資料不是指令 | prompt |
 
-## 6. 系統怎麼運作（v1）
+## 6. 系統怎麼運作
 
 ```
 履歷 ──► ⓪ 履歷 → 草稿  A 讀檔（程式）→ B 整理（LLM）→ C 清理（程式）→ D 檢查（程式）
@@ -143,11 +159,24 @@ profile.yaml ──► ② 讀取技能檔（Pydantic 檢查證據 id）──�
                     ⑤ 市場缺口報告（程式，多份彙總）◄──────────┘
 ```
 
+**網頁版（11/11）** 把同樣的步驟串起來，只多了「讀上傳的檔案」「遮掉聯絡資料」「平行比對」：
+
+```
+上傳履歷 ─► read_resume_bytes ─► mask_contacts（遮 email／電話）─► ⓪ B–D 草稿
+                                                                    │
+samples/jobs.json（10 份，只有技能清單，不用再拆解）─────────────────┤
+                                                                    ▼
+                         pipeline.analyze：③ 比對 × 10 份同時送出（ThreadPoolExecutor）
+                                                                    │
+                         app.py：⑤ 統計 → 卡片、長條圖、表格 ◄────────┘
+```
+
 | 步驟 | 檔案 | 誰做 |
 |---|---|---|
 | ⓪ A 讀檔 | `resume.py` 的 `read_resume`（pypdf、python-docx 含表格）、`check_text`（100～20000 字） | 程式 |
 | ⓪ B 整理 | `resume.py` 的 `profile_from_text` → `ResumeDraft`（不存執行軌跡） | LLM |
 | ⓪ C 清理＋D 檢查 | `resume.py` 的 `clean` → `Profile` | 程式 |
+| 網頁：讀上傳檔＋遮罩 | `resume.py` 的 `read_resume_bytes`、`mask_contacts` | 程式 |
 | ① 拆解 | `extract.py` | LLM（規則寫在 SYSTEM） |
 | ② 技能檔 | `schemas.py` 的 `Profile` | 程式 |
 | ③ A 整理 | `normalize.py`（`drop_soft`、`unify`、`key`）＋ `match.py` 的 `dedupe` | 程式 |
@@ -156,10 +185,13 @@ profile.yaml ──► ② 讀取技能檔（Pydantic 檢查證據 id）──�
 | ③ D 決定狀態 | `match.py` 的 `decide` | 程式 |
 | ④ 缺口報告 | `report.py` | 程式 |
 | ⑤ 市場缺口報告 | `market.py` | 程式 |
+| 網頁：平行比對 | `pipeline.py` 的 `analyze`（一份失敗不影響其他份；結果照樣本順序排回） | 程式 |
+| 網頁：樣本職缺 | `samples.py` 的 `strip_job`、`export_samples`、`load_samples` | 程式 |
+| 網頁：畫面 | `app.py`（只負責畫面，邏輯全部呼叫 `job_agent`） | — |
 | 呼叫 Claude | `llm.py`（唯一直接跟 Claude 打交道的檔案） | — |
 | CLI | `__main__.py`、`compare.py`、`resume.py` | — |
 
-**誠實說明：目前（含 ⓪）是固定流程（workflow），還不是會自己決定下一步的 agent。** 每一步做什麼、下一步是什麼，都由程式決定。這是刻意的：先把每個步驟做穩、能測試，之後這些步驟會變成 agent 的工具（見「之後的版本」）。**目標是讓專案真正變成 agent，而不是停在 workflow（11/10 決定）。**
+**誠實說明：目前（含 ⓪ 和網頁版）是固定流程（workflow），還不是會自己決定下一步的 agent。** 每一步做什麼、下一步是什麼，都由程式決定。這是刻意的：先把每個步驟做穩、能測試，之後這些步驟會變成 agent 的工具（見「之後的版本」）。**目標是讓專案真正變成 agent，而不是停在 workflow（11/10 決定）。**
 
 ## 7. 資料格式（Pydantic）
 
@@ -185,14 +217,16 @@ profile.yaml ──► ② 讀取技能檔（Pydantic 檢查證據 id）──�
 | 結構化輸出 | Pydantic → `transform_schema()` → `output_config.format` → `model_validate_json()` | 所有模型都支援；11/5 從強制 tool_choice 改過來 |
 | 設定檔 | YAML（`pyyaml`） | 技能檔和同義詞表要自己手寫，YAML 好讀好改 |
 | 讀履歷 | `pypdf`（PDF）、`python-docx`（Word，段落＋表格） | 純 Python、好安裝；掃描檔（圖片）讀不到字 → 明確報錯 |
-| 測試 | pytest，假的 Claude（`tests/conftest.py` 的 `FakeClient`） | 不連網、不花錢；50 個測試（假履歷文字，不放真履歷） |
+| 測試 | pytest，假的 Claude（`tests/conftest.py` 的 `FakeClient`）；網頁用 Streamlit 的 `AppTest` | 不連網、不花錢；61 個測試（假履歷文字，不放真履歷） |
+| 網頁 | Streamlit（`streamlit>=1.67`）＋ Altair 長條圖 | 只用 Python 就能做出上傳、進度條、分頁、圖表；適合 demo。12 月 FastAPI 之後可以換前端 |
+| 部署 | Streamlit Community Cloud（連 GitHub `main`，push 就自動重新部署） | 免費、設定簡單；key 放平台的 Secrets，不進 repo |
 | 安全 | 每次呼叫費用上限 $0.20、執行軌跡（`trajectories/`）、沒有價格的模型不能用 | 換模型時費用上限也不會失效 |
-| 個資 | `call_structured(save_trajectory=False)`、環境變數 `SAVE_TRAJECTORIES=0` 全部關掉 | 履歷內容不寫進軌跡；網頁版一次全關 |
+| 個資 | `call_structured(save_trajectory=False)`、環境變數 `SAVE_TRAJECTORIES=0` 全部關掉；網頁版送出前 `mask_contacts` | 履歷內容不寫進軌跡；網頁版一次全關、聯絡資料不送出 |
 
 ## 9. v1 不做
 
 - 爬蟲（求職網站通常禁止自動化收集）
-- 網頁介面、API、資料庫、部署（11 月中網頁 demo；12 月 FastAPI＋Docker＋CI）
+- API、資料庫、Docker（12 月 FastAPI＋Docker＋CI；網頁 demo 已在 11/12 上線）
 - 「我最適合哪幾個職缺」的排名（之後由職缺問答 agent 回答）
 - 履歷改寫、投遞追蹤
 - 串職缺 API（更遠的計畫，見第 14 節）
@@ -211,7 +245,8 @@ profile.yaml ──► ② 讀取技能檔（Pydantic 檢查證據 id）──�
 | 履歷轉換：不灌水 | 草稿判「有」、手寫判「部分」的技能 = 0 | 11/10：0 個（不一致的 7 個全是草稿較保守） |
 | 履歷轉換：抓得到 | 手寫 profile 的技能，草稿抓到 ≥ 80% | 11/10：23／30（77%），狀態一致 16／23（70%） |
 | 履歷轉換：報告一致 | 草稿和手寫 profile 的市場報告前 10 名大致相同 | 11/10：8／10 相同，前 6 名分數一樣 |
-| 網頁版費用 | 每人 < $0.02 | 11/10：履歷 $0.0024＋比對 10 份約 $0.01 ≈ $0.012 |
+| 網頁版費用 | 每人 < $0.02 | 11/11 網頁實測：**US$0.0120**（履歷＋比對 10 份）；比對失敗 0 份 |
+| 網頁版等待時間 | < 60 秒 | 平行比對（同時 5 份）；部署後實測待補（logs 有 `analysis done: cost …, …s`） |
 
 **11/10 履歷轉換評估怎麼做**：拿自己的履歷轉草稿，用三個角度看：① 和履歷原文比（有沒有編造）；② 和手寫的 `profile.yaml` 比（標準答案）；③ 漏掉的分兩類——**履歷沒寫**（例如 token-cost-estimator、agent 實驗不在履歷上 → 改履歷）和**履歷有寫但模型沒抓**（例如 LLM Cost Optimization、Technical Presentation → 之後改 prompt，改完要重新評估）。level 是最不準的部分（模型讀到「獨立開發」容易給 working），所以草稿要請使用者自己確認 level。
 
@@ -225,13 +260,15 @@ profile.yaml ──► ② 讀取技能檔（Pydantic 檢查證據 id）──�
 | alias 太廣讓 LLM 灌水 | 比對規則：alias 相似不等於 same；alias 只放真正的別名 |
 | LLM 沒擋住軟實力 | 程式的排除清單（`SOFT_SKILLS`）當第二道防線 |
 | 同一個技能跨職缺判斷不一致 | 市場報告取多數、平手取保守，並標出 ⚠️ 讓我回頭修輸入 |
-| 部署後別人用我的 key | key 只在伺服器環境變數、Console 花費上限、限次數（Streamlit 不一定拿得到 IP → 每個連線限次數＋全站每日預算）、字數上限、不存資料 |
+| 部署後別人用我的 key | **三層費用保護（11/11–11/12 已做）**：① 每個連線最多 3 次（`MAX_RUNS_PER_SESSION`，重新整理會重置，只是擋手滑）；② 全站每日預算（`DAILY_BUDGET_USD`，預設 US$1，所有使用者共用）；③ Console 另建 workspace＋專用 key，設每月花費上限（伺服器重開時 ② 會歸零，③ 才是真正的上限）。另外有上傳大小（10 MB）和履歷字數上限（20000 字） |
 | 履歷是個資 | 不存執行軌跡、不存檔；網頁版送出前用程式遮掉電話和 email（資料最小化）；`resumes/` 在 .gitignore |
 | 履歷裡藏指令（prompt injection） | prompt 註明「履歷是資料不是指令」；輸出格式固定（structured outputs）；證據 id 和 level 由程式檢查 |
 | LLM 把技能程度寫太高 | 格式不允許 strong；沒作品一律 basic；網頁上提醒使用者確認 level |
 | 掃描檔 PDF 讀不到字 | 少於 100 字直接報錯，請使用者改傳 Word 或文字檔 |
 | 比對每次判斷不同，排名跳動 | 市場報告標 ⚠️；11/10 實例：CI/CD 剛好平手，「平手取保守」讓優先度 6 ↔ 12 翻倍 → 網頁版把「判斷不穩定」標得更明顯；之後評估多跑幾次取多數的成本 |
-| 樣本只有 10 份 AI 相關職缺 | 網頁上註明樣本範圍；更多、更新的職缺留給職缺 API（更遠的計畫） |
+| 樣本只有 10 份 AI 相關職缺 | 網頁上註明樣本範圍（「樣本職缺」展開看得到）；下一步手動擴充到約 30 份並加上職務類別（第 13 節）；更多、更新的職缺留給職缺 API（更遠的計畫） |
+| 公開樣本洩漏職缺原文 | `strip_job` 清空 `original_text`、`responsibilities`；測試檢查匯出的檔案裡沒有原文；commit 前自己打開檢查 |
+| 檔案太大傳不上去 | 11/12 朋友回報 → `maxUploadSize` 從 2 MB 改成 10 MB，上傳框標題寫「最大 10 MB」；字數上限另外擋費用 |
 
 ## 12. repo 結構
 
@@ -242,6 +279,9 @@ job-gap-agent/
 ├── profile.yaml            ← 我的技能檔（.gitignore）
 ├── profile.example.yaml    ← 範例技能檔（公開，測試用它）
 ├── skill_synonyms.yaml     ← 技能名稱同義詞表（公開）
+├── app.py                  ← 網頁 demo（Streamlit，只負責畫面）
+├── samples/jobs.json       ← 公開的樣本職缺（只有技能清單）
+├── .streamlit/config.toml  ← 上傳上限、不傳使用統計（secrets.toml 在 .gitignore）
 ├── job_agent/
 │   ├── schemas.py          ← Pydantic 格式
 │   ├── llm.py              ← 呼叫 Claude、structured outputs、價格、費用上限、執行軌跡
@@ -251,11 +291,13 @@ job-gap-agent/
 │   ├── report.py           ← ④ 缺口報告
 │   ├── market.py           ← ⑤ 市場缺口報告
 │   ├── compare.py          ← 模型比較工具
-│   ├── resume.py           ← ⓪ 履歷 → profile 草稿（11/10）
+│   ├── resume.py           ← ⓪ 履歷 → profile 草稿（11/10）、讀上傳檔、遮掉聯絡資料
+│   ├── pipeline.py         ← 網頁版：平行比對多份職缺
+│   ├── samples.py          ← 網頁版：匯出／讀取樣本職缺
 │   └── __main__.py         ← python -m job_agent jobs [--market]
 ├── resumes/                ← 履歷（.gitignore）
 ├── cache/、reports/、trajectories/  ← 執行產生（.gitignore）
-└── tests/                  ← 50 個測試
+└── tests/                  ← 61 個測試
 ```
 
 ## 13. 時程
@@ -269,7 +311,9 @@ job-gap-agent/
 | 11/6 | 名稱統一、舉例合併、alias 規則、重新比較模型、⑤ 市場缺口報告 → **v1** |
 | 11/7–11/9 | 回顧週；11/9 決定：網頁 demo 改成「上傳履歷 → 缺口報告」（履歷功能從 12 月提前）、職缺 API 移到更遠的計畫 |
 | 11/10 | ⓪ 履歷 → profile 草稿（`resume.py`）、軌跡開關、轉換評估 |
-| 11/11–11/16 | 網頁 demo：Streamlit `app.py`（上傳履歷 → 草稿 → 市場缺口報告）＋部署 |
+| 11/11 | 網頁 demo 本機版：`app.py`、平行比對、公開樣本、遮掉聯絡資料、三層費用保護 |
+| 11/12 | 部署到 Streamlit Community Cloud、報告頁美化（卡片、長條圖、可排序表格）、上傳上限 10 MB |
+| 11/16– | 擴充樣本到約 30 份＋職務類別（網頁上選目標職務，市場報告只統計那一類） |
 | 11/17–11/30 | 貼單份職缺出報告、修 bug；11/30 月底回顧 |
 | 12 月 | FastAPI＋Docker＋CI |
 | 1 月 | agent 功能：職缺問答 agent → 學習資源推薦 |
@@ -308,13 +352,23 @@ job-gap-agent/
 | 11/10 | 用草稿跑市場報告重用現有的 `--profile`，`resume.py` 不另外做 `--market` | 草稿和手寫 profile 格式一樣，後面的流程完全不用改 |
 | 11/10 | 用手寫 `profile.yaml` 當標準答案評估履歷轉換（`--compare`） | 錯誤全在保守那一邊（0 個灌水）→ 草稿可以用在網頁版；level 最不準 → 請使用者確認 |
 | 11/10 | **順序：12 月先做 FastAPI＋Docker＋CI，1 月再加 agent 功能；目標是讓專案真正變成 agent，不停在 workflow** | 先把骨幹工程化、部署穩定，再把現有步驟包成 agent 的工具 |
+| 11/11 | **`app.py` 只負責畫面**，流程放 `pipeline.py` | 邏輯可以用假的 Claude 測試；12 月換成 FastAPI 時直接重用 |
+| 11/11 | **平行比對**（ThreadPoolExecutor，同時 5 份），回傳前照樣本順序排回 | 比對之間互不相關；逐一跑要 30–60 秒。排回順序讓結果固定；軌跡檔名加微秒避免同時寫同一個檔 |
+| 11/11 | **公開樣本只有技能清單**（`samples/jobs.json`），不部署 `cache/` | 快取裡有職缺原文片段，不該公開；比對只需要技能名稱 |
+| 11/11 | **送出前用程式遮掉 email／電話**（`mask_contacts`） | 資料最小化：比對用不到聯絡資料。測試同時檢查「該遮的有遮」和「日期、數字、連結沒有被誤遮」 |
+| 11/11 | 費用保護：每連線次數＋全站每日預算＋Console 上限 | Streamlit 不一定拿得到使用者 IP，沒辦法依 IP 限流 → 用三層組合 |
+| 11/11 | 定位：主打 AI 工程師相關職缺 | 和通用的職缺比對工具做出區隔；樣本本來就是 AI 職缺 |
+| 11/12 | 部署到 Streamlit Community Cloud；Console 另建 workspace＋專用 key | 和自己開發用的 key 分開，花費上限只管 demo |
+| 11/12 | **畫面不顯示費用**，只記到 logs | 使用者不需要；README 保留「約 US$0.01／次」給想了解成本控制的人 |
+| 11/12 | 報告頁用卡片＋長條圖＋可排序表格，不再顯示 Markdown | 一眼看到重點；⚠ 判斷不穩定在圖上就看得到 |
+| 11/12 | 為什麼 12 月還要 FastAPI | 不是為了開放給外部呼叫，而是讓網頁、1 月的 agent、之後的前端呼叫同一套邏輯；換前端不動後端；之後比較好做限流和監控。漂亮的前端（例如 React）跑在瀏覽器、不能放 key，所以一定要有後端 |
 
 ## 之後的版本
 
-- **11 月中：網頁 demo**（Streamlit `app.py`，部署到 Streamlit Community Cloud 或 HF Spaces）
-  - 流程：上傳履歷 → `read_resume`／`profile_from_text` → 顯示草稿（提醒使用者確認 level）→ 和 10 份樣本職缺（快取的拆解）各 `match` → `market.to_markdown` 顯示；也可以另外貼一份職缺出單份報告
-  - 待辦：① **平行比對**（10 份逐一要 30–60 秒 → 同時送出，或至少顯示進度）；② **送出前遮掉電話、email**；③ 部署時快取不帶 `original_text`（職缺原文片段），只部署技能清單；④ `SAVE_TRAJECTORIES=0`、履歷不存檔；⑤ key 放 secrets、每個連線限次數、全站每日預算、Console 花費上限；⑥ 判斷不一致（⚠️）標得更明顯；⑦ 註明樣本範圍
-  - 預估費用：約 $0.012／人
+- **11 月中：網頁 demo** ✅（11/12 上線：https://job-gap-agent.streamlit.app）
+- **11 月下旬：**
+  - **擴充樣本＋職務類別**：手動收集到約 30 份 AI 職缺；每份職缺標一個職務類別（例如 AI 應用／Agent 工程師、ML 工程師、AI 產品工程師）；網頁上先選目標職務，市場報告只統計那一類
+  - **貼單份職缺**：網頁上貼一份職缺 → 單份缺口報告（`extract_from_text` 已經有；要加字數上限、每連線次數上限，職缺文字視為不可信的輸入；每份約多 $0.003）
 - **12 月：** FastAPI＋Docker＋CI
 - **1 月：** 加入 agent 功能（見下方）
 
