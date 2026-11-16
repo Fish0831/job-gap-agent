@@ -6,7 +6,7 @@ from pathlib import Path
 from streamlit.testing.v1 import AppTest
 
 from job_agent.pipeline import analyze
-from job_agent.samples import export_samples, load_samples, strip_job
+from job_agent.samples import export_samples, load_roles, load_samples, strip_job
 from job_agent.schemas import JobRequirements, Profile
 
 APP = Path(__file__).parent.parent / "app.py"
@@ -35,12 +35,13 @@ def test_strip_job_removes_posting_text():
 def test_export_and_load_samples(tmp_path, monkeypatch, fake):
     monkeypatch.chdir(tmp_path)
     f = tmp_path / "02.txt"
-    f.write_text("title: AI Engineer\ncompany: ACME\n---\n熟悉 Python\n", encoding="utf-8")
+    f.write_text("title: AI Engineer\ncompany: ACME\nrole: ai-app\n---\n熟悉 Python\n", encoding="utf-8")
     out = export_samples([f], tmp_path / "samples" / "jobs.json", client=fake(JOB))
 
     assert "熟悉 Python" not in out.read_text(encoding="utf-8")  # 匯出的檔案裡沒有原文
     samples = load_samples(out)
     assert samples[0][0] == "02" and samples[0][1].company == "ACME"
+    assert load_roles(out) == {"02": "ai-app"}                    # 職務類別也匯出了
 
 
 def test_analyze_runs_all_jobs_and_keeps_order(fake):
@@ -101,3 +102,4 @@ def test_app_shows_result_page(tmp_path, monkeypatch, fake):
     assert at.metric[2].value == "LangGraph"                    # 唯一的缺口（部分）
     assert not any("US$" in m.value for m in at.markdown)       # 畫面上不顯示費用
     assert len(at.dataframe) == 2                               # 樣本職缺＋完整統計
+    assert at.metric[0].delta == "全部職務"                      # 舊的結果沒有 role_label → 顯示「全部職務」

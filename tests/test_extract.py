@@ -106,3 +106,13 @@ def test_cache_fingerprint_changes_when_schema_changes(tmp_path, monkeypatch):
 
     monkeypatch.setattr(extract, "JobRequirements", NewRequirements)
     assert cache_path(f, "claude-haiku-5-5") != base           # 改資料格式 → 舊快取不用
+
+def test_cache_fingerprint_ignores_role_but_not_title(tmp_path):
+    """指紋只看送給模型的內容：改 role:（不送給模型）不重拆；改職稱（會送給模型）要重拆。"""
+    f = tmp_path / "02.txt"
+    f.write_text("title: x\ncompany: ACME\n---\n熟悉 Python\n", encoding="utf-8")
+    base = cache_path(f, "claude-haiku-5-5")
+    f.write_text("title: x\ncompany: ACME\nrole: ai-app\n---\n熟悉 Python\n", encoding="utf-8")
+    assert cache_path(f, "claude-haiku-5-5") == base           # 加上職務類別 → 沿用快取
+    f.write_text("title: y\ncompany: ACME\nrole: ai-app\n---\n熟悉 Python\n", encoding="utf-8")
+    assert cache_path(f, "claude-haiku-5-5") != base           # 改職稱 → 重拆

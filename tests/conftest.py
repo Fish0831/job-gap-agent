@@ -36,3 +36,12 @@ def default_models(monkeypatch):
     for step in ("EXTRACT", "MATCH", "RESUME"):
         monkeypatch.delenv(f"{step}_MODEL", raising=False)
     monkeypatch.delenv("SAVE_TRAJECTORIES", raising=False)
+
+@pytest.fixture(autouse=True)
+def clear_streamlit_cache():
+    """app.py 用 st.cache_data／st.cache_resource 記住樣本和每日預算；同一次 pytest 裡會跨測試共用
+    → 每個測試開始前清掉，前一個測試的樣本才不會跑進下一個測試。"""
+    import streamlit as st
+
+    st.cache_data.clear()
+    st.cache_resource.clear()

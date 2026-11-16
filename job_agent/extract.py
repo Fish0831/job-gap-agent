@@ -41,12 +41,16 @@ def read_job(path: str | Path) -> tuple[dict, str]:
     return meta, body.strip()
 
 
+def build_user(text: str, title: str = "", company: str = "") -> str:
+    """送給模型的職缺內容。拆解和快取指紋都用這個函式 → 兩邊一定一致。"""
+    return f"Job title: {title}\nCompany: {company}\n\nJob posting:\n{text}"
+
+
 def extract_from_text(text: str, title: str = "", company: str = "", client=None) -> tuple[JobRequirements, dict]:
     """直接收職缺文字（網頁版會用這個）。"""
-    user = f"Job title: {title}\nCompany: {company}\n\nJob posting:\n{text}"
     job, stats = call_structured(
         system=SYSTEM,
-        user=user,
+        user=build_user(text, title, company),
         schema=JobRequirements,
         name="extract",
         model=model_for("extract"),
@@ -60,11 +64,13 @@ def extract_from_text(text: str, title: str = "", company: str = "", client=None
 
 def cache_path(path: str | Path, model: str) -> Path:
     """快取檔名 = 職缺檔名 + 指紋。
-    職缺內容、拆解模型、拆解規則（SYSTEM）、資料格式（JobRequirements）任何一個改了，指紋就變 → 自動重拆。"""
+    指紋 = 會影響拆解結果的所有東西：拆解模型、拆解規則（SYSTEM）、資料格式（JobRequirements）、
+    送給模型的職缺內容（職稱、公司、原文）。任何一個改了，指紋就變 → 自動重拆。
+    不送給模型的欄位（例如 role:）不算 → 改職務類別不會重拆、不花錢。"""
+    meta, body = read_job(path)
     schema = json.dumps(JobRequirements.model_json_schema(), sort_keys=True)  # 改 schemas.py 的欄位也算
-    fingerprint = hashlib.sha256(
-        (model + SYSTEM + schema + Path(path).read_text(encoding="utf-8")).encode()
-    ).hexdigest()[:8]
+    user = build_user(body, meta.get("title", ""), meta.get("company", ""))
+    fingerprint = hashlib.sha256((model + SYSTEM + schema + user).encode()).hexdigest()[:8]
     return CACHE_DIR / f"{Path(path).stem}_{fingerprint}.json"
 
 

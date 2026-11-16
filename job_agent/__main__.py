@@ -7,6 +7,7 @@
     python -m job_agent jobs --no-cache              重新拆解（不用快取）
     python -m job_agent jobs --profile my.yaml       指定技能檔
     python -m job_agent jobs --market                每份的報告 ＋ 一份跨職缺的市場缺口報告
+    python -m job_agent jobs --market --role ai-app  只分析某個職務類別的職缺（職缺檔開頭的 role:）
 換模型：在 .env 或終端機設定 EXTRACT_MODEL／MATCH_MODEL
 """
 
@@ -22,6 +23,7 @@ from job_agent.market import save_markdown as save_market
 from job_agent.market import to_markdown as market_markdown
 from job_agent.match import match
 from job_agent.report import build_report, save_markdown, to_markdown
+from job_agent.roles import ROLES, filter_role
 from job_agent.schemas import Profile
 
 
@@ -56,11 +58,18 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--profile", default="profile.yaml", help="技能檔（預設 profile.yaml）")
     parser.add_argument("--no-cache", action="store_true", help="重新拆解職缺，不用快取")
     parser.add_argument("--market", action="store_true", help="另外產生跨職缺的市場缺口報告")
+    parser.add_argument("--role", choices=list(ROLES), help="只分析這個職務類別的職缺")
     args = parser.parse_args(argv)
 
     profile = Profile.from_yaml(args.profile)
     files = job_files(args.jobs)
-    print(f"模型：拆解 {model_for('extract')}／比對 {model_for('match')}　共 {len(files)} 份職缺\n")
+    if args.role:
+        try:
+            files = filter_role(files, args.role)
+        except ValueError as e:  # 有職缺檔沒寫 role: 或寫錯 → 印出是哪個檔案就停
+            parser.error(str(e))
+    scope = f"（{ROLES[args.role]}）" if args.role else ""
+    print(f"模型：拆解 {model_for('extract')}／比對 {model_for('match')}　共 {len(files)} 份職缺{scope}\n")
 
     total, failed, runs = 0.0, [], []
     for path in files:
@@ -76,7 +85,8 @@ def main(argv: list[str] | None = None) -> None:
 
     if args.market and runs:
         stats = aggregate(runs)
-        out = save_market(market_markdown(runs, stats, cost_usd=total))
+        out = save_market(market_markdown(runs, stats, cost_usd=total,
+                                          role_label=ROLES[args.role] if args.role else None))
         print(f"\n市場缺口報告（{len(runs)} 份職缺）")
         for i, s in enumerate(top_gaps(stats, 5), 1):
             print(f"   {i}. {s.skill:<28} 必備 {len(s.required_in)} 份、加分 {len(s.preferred_in)} 份   優先度 {priority(s)}")

@@ -109,11 +109,11 @@ def _jobs(ids: list[str]) -> str:
 
 
 def to_markdown(runs: list[Run], stats: list[SkillStat], cost_usd: float | None = None,
-                created_at: datetime | None = None) -> str:
+                created_at: datetime | None = None, role_label: str | None = None) -> str:
     n = len(runs)
     created_at = created_at or datetime.now()
     lines = [
-        f"# 市場缺口報告（{n} 份職缺）",
+        f"# 市場缺口報告{'：' + role_label if role_label else ''}（{n} 份職缺）",
         "",
         f"- 產生時間：{created_at:%Y-%m-%d %H:%M}",
         f"- 樣本：{n} 份職缺、{len(stats)} 個不同的技能（已統一名稱、排除軟實力）",

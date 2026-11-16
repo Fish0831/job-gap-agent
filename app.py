@@ -1,4 +1,4 @@
-"""網頁 demo：上傳履歷 → profile 草稿 → 和樣本職缺比對 → 市場缺口報告。
+"""網頁 demo：選目標職務 → 上傳履歷 → profile 草稿 → 和那一類的樣本職缺比對 → 市場缺口報告。
 
 執行：streamlit run app.py
 這個檔案只負責「畫面」：讀檔、轉草稿、比對、統計全部呼叫 job_agent 裡現有的函式。
@@ -25,10 +25,12 @@ from job_agent.llm import LLMError, model_for
 from job_agent.market import SkillStat, aggregate, priority, strengths, top_gaps
 from job_agent.pipeline import analyze
 from job_agent.resume import profile_from_text, read_resume_bytes, status_of, to_yaml
-from job_agent.samples import SAMPLES_FILE, load_samples
+from job_agent.roles import ROLE_HINTS, ROLES
+from job_agent.samples import SAMPLES_FILE, load_roles, load_samples
 
 MAX_RUNS_PER_SESSION = 3
-EST_COST_PER_RUN = 0.02  # 預估每次的費用（實測約 $0.012，抓寬一點）
+MIN_ROLE_SAMPLES = 3     # 某個職務類別至少要有幾份樣本，才放進選項（太少統計沒意義）
+ALL_ROLES = "全部職務"
 STATUS_TEXT = {"have": "有", "partial": "部分", "missing": "沒有"}
 STATUS_COLOR = {"missing": "#E24B4A", "partial": "#EF9F27"}  # 長條圖：沒有＝紅、部分＝橘
 
@@ -67,14 +69,24 @@ def add_spent(cost: float) -> None:
         b["spent"] += cost
 
 
+def est_cost(n_jobs: int) -> float:
+    """預估一次分析的費用。實測：履歷約 $0.0024＋每份職缺約 $0.001 → 抓兩倍寬。"""
+    return 0.005 + 0.002 * n_jobs
+
+
 @st.cache_data
 def get_samples():
     return load_samples()
 
 
+@st.cache_data
+def get_roles():
+    return load_roles()
+
+
 # ===== 分析（呼叫 job_agent）=====
 
-def run_analysis(uploaded, samples) -> dict | None:
+def run_analysis(uploaded, samples, role_label: str) -> dict | None:
     start = time.perf_counter()
     with st.status("分析中…", expanded=True) as status:
         st.write("① 讀取履歷")
@@ -92,18 +104,33 @@ def run_analysis(uploaded, samples) -> dict | None:
     add_spent(cost)
     # 只寫進伺服器 logs（Manage app 才看得到）：費用、秒數，不含任何履歷內容
     print(f"[job-gap-agent] analysis done: cost ${cost:.4f}, {seconds:.1f}s, "
-          f"jobs {len(runs)}, failed {len(failed)}", flush=True)
-    return {"profile": profile, "notes": notes, "runs": runs, "failed": failed, "cost": cost, "seconds": seconds}
+          f"role {role_label}, jobs {len(runs)}, failed {len(failed)}", flush=True)
+    return {"profile": profile, "notes": notes, "runs": runs, "failed": failed, "cost": cost, "seconds": seconds,
+            "role_label": role_label}
 
 
 # ===== 畫面 =====
 
-def show_samples(samples) -> None:
+def choose_role(samples, roles: dict[str, str]) -> str | None:
+    """選目標職務。回傳 role（例如 ai-app），選「全部」回傳 None。樣本太少的類別不放進選項。"""
+    counts = {r: sum(roles.get(jid) == r for jid, _ in samples) for r in ROLES}
+    options = [None] + [r for r in ROLES if counts[r] >= MIN_ROLE_SAMPLES]
+    if len(options) == 1:  # 樣本還沒標職務類別 → 不顯示選項
+        return None
+    role = st.radio(
+        "目標職務", options, horizontal=True,
+        format_func=lambda r: f"{ALL_ROLES}（{len(samples)} 份）" if r is None else f"{ROLES[r]}（{counts[r]} 份）",
+    )
+    st.caption(ROLE_HINTS[role] if role else "所有樣本職缺一起統計。選一個職務，報告只看那一類職缺的要求。")
+    return role
+
+
+def show_samples(samples, roles: dict[str, str]) -> None:
     with st.expander(f"樣本職缺（{len(samples)} 份）"):
         st.caption("作者自己收集的台灣 AI 相關職缺（2026 年 10–11 月）。只保留技能清單，不含職缺原文。"
                    "如果你找的是其他領域的工作，這份報告的參考價值會比較低。")
         st.dataframe(
-            [{"編號": jid, "職稱": j.title, "公司": j.company or "—",
+            [{"編號": jid, "職務": ROLES.get(roles.get(jid, ""), "—"), "職稱": j.title, "公司": j.company or "—",
               "必備技能數": sum(r.required for r in j.requirements)} for jid, j in samples],
             hide_index=True, width="stretch",
         )
@@ -135,7 +162,7 @@ def gap_chart(gaps: list[SkillStat]) -> alt.Chart:
     )
 
 
-def show_report(runs, samples_by_id) -> None:
+def show_report(runs, samples_by_id, role_label: str) -> None:
     stats = aggregate(runs)
     n = len(runs)
     required = [s for s in stats if s.required_in]
@@ -144,7 +171,7 @@ def show_report(runs, samples_by_id) -> None:
 
     c1, c2, c3 = st.columns(3)
     card = dict(delta_color="off", delta_arrow="off", border=True)  # 小字只是說明，不是漲跌 → 不要箭頭
-    c1.metric("比對的職缺", f"{n} 份", "台灣 AI 工程師", **card)
+    c1.metric("比對的職缺", f"{n} 份", role_label, **card)
     c2.metric("必備技能：有／部分／沒有", f"{counts['have']} / {counts['partial']} / {counts['missing']}",
               "各技能跨職缺的判斷", **card)
     c3.metric("最該先補", gaps[0].skill if gaps else "—", f"優先度 {priority(gaps[0])}" if gaps else None, **card)
@@ -217,7 +244,7 @@ def show_result(result: dict, samples) -> None:
                    f"報告只包含其他 {len(result['runs'])} 份。")
     tab_report, tab_draft = st.tabs(["📊 市場缺口報告", "📝 技能草稿"])
     with tab_report:
-        show_report(result["runs"], dict(samples))
+        show_report(result["runs"], dict(samples), result.get("role_label", ALL_ROLES))
     with tab_draft:
         show_draft(result)
 
@@ -225,14 +252,17 @@ def show_result(result: dict, samples) -> None:
 def main() -> None:
     load_secrets()
     st.title("🧭 履歷技能缺口分析")
-    st.markdown("上傳履歷，看看你的技能和**樣本職缺**的要求差在哪裡：哪些有作品可以證明、哪些只有一部分、"
+    st.markdown("選目標職務、上傳履歷，看看你的技能和**樣本職缺**的要求差在哪裡：哪些有作品可以證明、哪些只有一部分、"
                 "哪些還沒有，以及最值得先補的技能。")
 
     if not SAMPLES_FILE.exists():
         st.error(f"找不到樣本職缺 {SAMPLES_FILE}：請先執行 python -m job_agent.samples jobs")
         st.stop()
-    samples = get_samples()
-    show_samples(samples)
+    samples, roles = get_samples(), get_roles()
+    role = choose_role(samples, roles)
+    chosen = [(jid, job) for jid, job in samples if role is None or roles.get(jid) == role]
+    role_label = ROLES[role] if role else ALL_ROLES
+    show_samples(chosen, roles)
 
     uploaded = st.file_uploader("上傳履歷（PDF、Word、文字檔，最大 10 MB）", type=["pdf", "docx", "txt", "md"])
     st.caption("🔒 履歷不會被儲存。送給 Claude 之前，程式會先遮掉 email 和電話；結果只留在這個瀏覽器分頁，關掉就沒了。")
@@ -241,19 +271,19 @@ def main() -> None:
     if st.button("產生缺口報告", type="primary", disabled=uploaded is None):
         if used >= MAX_RUNS_PER_SESSION:
             st.error(f"每次最多分析 {MAX_RUNS_PER_SESSION} 份履歷。")
-        elif budget_left() < EST_COST_PER_RUN:
+        elif budget_left() < est_cost(len(chosen)):
             st.error("今天的試用額度已經用完了，請明天再來。")
         else:
             st.session_state["runs_used"] = used + 1
             try:
-                st.session_state["result"] = run_analysis(uploaded, samples)
+                st.session_state["result"] = run_analysis(uploaded, chosen, role_label)
             except ValueError as e:  # 檔案格式、字數、掃描檔
                 st.error(str(e))
             except (LLMError, APIError) as e:
                 st.error(f"呼叫 Claude 失敗，請稍後再試（{type(e).__name__}）")
 
     if "result" in st.session_state:  # 存在 session_state：按下載按鈕重新整理時結果不會消失
-        show_result(st.session_state["result"], samples)
+        show_result(st.session_state["result"], samples)  # 用全部樣本查公司名稱：分析後換了職務也查得到
 
 
 main()

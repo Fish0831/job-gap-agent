@@ -14,11 +14,12 @@ Design doc (Traditional Chinese): [docs/design.md](docs/design.md)
 ```
 upload resume ─► read file ─► mask email / phone ─► resume → skill profile draft (LLM)
                                                               │
-samples/jobs.json (10 AI job postings, skill lists only) ─────┤
+samples/jobs.json (AI job postings, skill lists only) ───────┤
                                                               ▼
                           match against every posting in parallel ─► market gap report
 ```
 
+- **Pick a target role first** (AI application / agent engineer, ML engineer, AI product engineer). The market report then only counts postings of that role; "all roles" counts every sample.
 - **Two tabs:** the market gap report (metric cards, a "fill these gaps first" chart, strongest skills, a sortable table) and the skill profile draft built from the resume (projects as evidence, skills with / without evidence, a YAML download).
 - **Privacy:** the resume is never stored and run traces are switched off (`SAVE_TRAJECTORIES=0`). Email addresses and phone numbers are masked in code before anything is sent to Claude.
 - **Public samples:** `samples/jobs.json` holds only job titles, companies and extracted skill lists — no posting text.
@@ -79,15 +80,19 @@ ANTHROPIC_API_KEY=sk-ant-...
    ```
    title: AI Engineer
    company: ACME
+   role: ai-app
    ---
    (paste the whole posting here)
    ```
+
+   `role` is the job category, labelled by hand: `ai-app` (LLM apps, RAG, agents), `ml` (train / evaluate / deploy models) or `ai-product` (requirements to shipped product features). The list lives in [`job_agent/roles.py`](job_agent/roles.py). It is not sent to the LLM, so changing it never triggers a re-extraction.
 
 2. Run:
 
    ```bash
    python -m job_agent jobs/11.txt          # one posting
    python -m job_agent jobs --market        # every posting in jobs/ + the market gap report
+   python -m job_agent jobs --market --role ai-app   # only postings of one role
    ```
 
 3. Open the reports in `reports/` (`<job>_<time>.md` and `market_<time>.md`).
