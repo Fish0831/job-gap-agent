@@ -8,19 +8,19 @@
       "min_years": null,
       "requirements": [
         {
-          "skill": "AI Coding Tools",
+          "skill": "Software Development",
           "original_text": "",
-          "category": "llm",
+          "category": "language",
           "required": true
         },
         {
-          "skill": "Software Development",
+          "skill": "Requirement Analysis",
           "original_text": "",
           "category": "other",
           "required": true
         },
         {
-          "skill": "Requirement Analysis",
+          "skill": "Technical Specification",
           "original_text": "",
           "category": "other",
           "required": true
@@ -32,25 +32,13 @@
           "required": true
         },
         {
-          "skill": "User Flow Design",
+          "skill": "AI Coding Tools",
           "original_text": "",
-          "category": "other",
+          "category": "llm",
           "required": true
         },
         {
-          "skill": "Functional Specification",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
-          "skill": "System Design",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
-          "skill": "API",
+          "skill": "API Design",
           "original_text": "",
           "category": "infra",
           "required": true
@@ -62,19 +50,19 @@
           "required": true
         },
         {
-          "skill": "Frontend Development",
-          "original_text": "",
-          "category": "framework",
-          "required": true
-        },
-        {
-          "skill": "Backend Development",
+          "skill": "Full-Stack Development",
           "original_text": "",
           "category": "framework",
           "required": true
         },
         {
           "skill": "System Architecture",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "System Design",
           "original_text": "",
           "category": "infra",
           "required": true
@@ -92,21 +80,21 @@
           "required": true
         },
         {
-          "skill": "Code Review",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
           "skill": "Version Control",
           "original_text": "",
-          "category": "infra",
+          "category": "other",
           "required": true
         },
         {
           "skill": "Deployment",
           "original_text": "",
           "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "Code Review",
+          "original_text": "",
+          "category": "other",
           "required": true
         },
         {
@@ -128,6 +116,18 @@
       "min_years": null,
       "requirements": [
         {
+          "skill": "Python",
+          "original_text": "",
+          "category": "language",
+          "required": true
+        },
+        {
+          "skill": "AI Coding Assistant",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
           "skill": "AI Agent",
           "original_text": "",
           "category": "llm",
@@ -140,7 +140,7 @@
           "required": true
         },
         {
-          "skill": "Open-Source LLM",
+          "skill": "Open-Source LLM Deployment",
           "original_text": "",
           "category": "llm",
           "required": true
@@ -161,18 +161,6 @@
           "skill": "MCP",
           "original_text": "",
           "category": "llm",
-          "required": true
-        },
-        {
-          "skill": "Python",
-          "original_text": "",
-          "category": "language",
-          "required": true
-        },
-        {
-          "skill": "AI Coding Tools",
-          "original_text": "",
-          "category": "other",
           "required": true
         },
         {
@@ -212,12 +200,6 @@
       "min_years": null,
       "requirements": [
         {
-          "skill": "Software Development",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
           "skill": "Programming Language",
           "original_text": "",
           "category": "language",
@@ -226,7 +208,7 @@
         {
           "skill": "Git",
           "original_text": "",
-          "category": "infra",
+          "category": "other",
           "required": true
         },
         {
@@ -254,21 +236,15 @@
           "required": true
         },
         {
-          "skill": "AI Workflow Optimization",
+          "skill": "Development Environment Integration",
           "original_text": "",
-          "category": "llm",
+          "category": "other",
           "required": true
         },
         {
           "skill": "Requirement Analysis",
           "original_text": "",
           "category": "other",
-          "required": true
-        },
-        {
-          "skill": "Web Development",
-          "original_text": "",
-          "category": "framework",
           "required": true
         },
         {
@@ -284,7 +260,7 @@
           "required": false
         },
         {
-          "skill": "DevOps / CI/CD",
+          "skill": "CI/CD",
           "original_text": "",
           "category": "infra",
           "required": false
@@ -296,7 +272,7 @@
           "required": false
         },
         {
-          "skill": "Mentoring",
+          "skill": "Technical Mentoring",
           "original_text": "",
           "category": "other",
           "required": false
@@ -322,7 +298,7 @@
         {
           "skill": "Shell Scripting",
           "original_text": "",
-          "category": "language",
+          "category": "infra",
           "required": true
         },
         {
@@ -350,7 +326,7 @@
           "required": true
         },
         {
-          "skill": "Docker",
+          "skill": "Containerization",
           "original_text": "",
           "category": "infra",
           "required": true
@@ -362,15 +338,9 @@
           "required": true
         },
         {
-          "skill": "SQL",
-          "original_text": "",
-          "category": "data",
-          "required": true
-        },
-        {
           "skill": "Data Mining",
           "original_text": "",
-          "category": "ml",
+          "category": "data",
           "required": true
         },
         {
@@ -380,7 +350,13 @@
           "required": true
         },
         {
-          "skill": "Large-Scale Data Analysis",
+          "skill": "SQL",
+          "original_text": "",
+          "category": "data",
+          "required": true
+        },
+        {
+          "skill": "Large-Scale Database Data Analysis",
           "original_text": "",
           "category": "data",
           "required": true
@@ -416,13 +392,31 @@
           "required": true
         },
         {
-          "skill": "Machine Learning",
+          "skill": "Feature Engineering",
           "original_text": "",
           "category": "ml",
-          "required": false
+          "required": true
         },
         {
-          "skill": "Deep Learning",
+          "skill": "Model Evaluation",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Kubernetes",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "Microservices",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "Machine Learning Frameworks",
           "original_text": "",
           "category": "ml",
           "required": false
@@ -446,19 +440,19 @@
           "required": false
         },
         {
+          "skill": "SDLC",
+          "original_text": "",
+          "category": "other",
+          "required": false
+        },
+        {
           "skill": "Java",
           "original_text": "",
           "category": "language",
           "required": false
         },
         {
-          "skill": "RESTful Web Services",
-          "original_text": "",
-          "category": "other",
-          "required": false
-        },
-        {
-          "skill": "SOAP Web Services",
+          "skill": "Web Services API",
           "original_text": "",
           "category": "other",
           "required": false
@@ -466,50 +460,8 @@
         {
           "skill": "SQL",
           "original_text": "",
-          "category": "data",
+          "category": "language",
           "required": false
-        },
-        {
-          "skill": "Kubernetes",
-          "original_text": "",
-          "category": "infra",
-          "required": true
-        },
-        {
-          "skill": "Containerization",
-          "original_text": "",
-          "category": "infra",
-          "required": false
-        },
-        {
-          "skill": "Data Engineering",
-          "original_text": "",
-          "category": "data",
-          "required": true
-        },
-        {
-          "skill": "AI Platform",
-          "original_text": "",
-          "category": "infra",
-          "required": true
-        },
-        {
-          "skill": "Model Lifecycle Management",
-          "original_text": "",
-          "category": "ml",
-          "required": true
-        },
-        {
-          "skill": "Feature Engineering",
-          "original_text": "",
-          "category": "ml",
-          "required": true
-        },
-        {
-          "skill": "Error Analysis",
-          "original_text": "",
-          "category": "ml",
-          "required": true
         }
       ],
       "responsibilities": []
@@ -590,13 +542,25 @@
           "required": true
         },
         {
-          "skill": "Model Versioning",
+          "skill": "API Design",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "Distributed Systems",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Model Evaluation",
           "original_text": "",
           "category": "ml",
           "required": true
         },
         {
-          "skill": "Model Evaluation",
+          "skill": "Model Monitoring",
           "original_text": "",
           "category": "ml",
           "required": true
@@ -614,12 +578,6 @@
           "required": true
         },
         {
-          "skill": "Multimodal Generative AI",
-          "original_text": "",
-          "category": "ml",
-          "required": true
-        },
-        {
           "skill": "AI Agent",
           "original_text": "",
           "category": "llm",
@@ -632,39 +590,15 @@
           "required": false
         },
         {
-          "skill": "Image or Video Generation",
+          "skill": "Image and Video Generation",
           "original_text": "",
           "category": "ml",
           "required": false
         },
         {
-          "skill": "Agent Frameworks",
-          "original_text": "",
-          "category": "llm",
-          "required": false
-        },
-        {
-          "skill": "Agent Tool Design",
-          "original_text": "",
-          "category": "llm",
-          "required": false
-        },
-        {
-          "skill": "Recommendation Systems",
+          "skill": "A/B Testing",
           "original_text": "",
           "category": "ml",
-          "required": false
-        },
-        {
-          "skill": "Online Experimentation",
-          "original_text": "",
-          "category": "data",
-          "required": false
-        },
-        {
-          "skill": "Advertising Technology",
-          "original_text": "",
-          "category": "other",
           "required": false
         }
       ],
@@ -706,7 +640,7 @@
         {
           "skill": "Statistics",
           "original_text": "",
-          "category": "ml",
+          "category": "data",
           "required": true
         },
         {
@@ -746,7 +680,7 @@
           "required": true
         },
         {
-          "skill": "LLM",
+          "skill": "LLM Application Development",
           "original_text": "",
           "category": "llm",
           "required": true
@@ -758,9 +692,9 @@
           "required": true
         },
         {
-          "skill": "RAG",
+          "skill": "ML Model Deployment",
           "original_text": "",
-          "category": "llm",
+          "category": "ml",
           "required": true
         },
         {
@@ -770,21 +704,33 @@
           "required": true
         },
         {
+          "skill": "English",
+          "original_text": "",
+          "category": "language",
+          "required": true
+        },
+        {
+          "skill": "AI Agent Frameworks",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
           "skill": "Prompt Engineering",
           "original_text": "",
           "category": "llm",
           "required": false
         },
         {
-          "skill": "Model Deployment",
+          "skill": "RAG",
           "original_text": "",
-          "category": "infra",
+          "category": "llm",
           "required": false
         },
         {
           "skill": "ML Model Monitoring",
           "original_text": "",
-          "category": "infra",
+          "category": "ml",
           "required": false
         },
         {
@@ -794,15 +740,9 @@
           "required": false
         },
         {
-          "skill": "Microservices",
+          "skill": "API Development",
           "original_text": "",
-          "category": "infra",
-          "required": false
-        },
-        {
-          "skill": "Data Pipeline",
-          "original_text": "",
-          "category": "data",
+          "category": "other",
           "required": false
         },
         {
@@ -820,7 +760,7 @@
         {
           "skill": "Yield Analysis",
           "original_text": "",
-          "category": "ml",
+          "category": "data",
           "required": false
         }
       ],
@@ -908,6 +848,12 @@
           "required": false
         },
         {
+          "skill": "Top-tier AI Conference Publication",
+          "original_text": "",
+          "category": "other",
+          "required": false
+        },
+        {
           "skill": "LLM API Integration",
           "original_text": "",
           "category": "llm",
@@ -974,15 +920,33 @@
           "required": true
         },
         {
-          "skill": "Version Control",
+          "skill": "CI/CD",
           "original_text": "",
           "category": "infra",
           "required": true
         },
         {
-          "skill": "CI/CD",
+          "skill": "Version Control",
           "original_text": "",
-          "category": "infra",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Code Review",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Testing",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Debugging",
+          "original_text": "",
+          "category": "other",
           "required": true
         },
         {
@@ -1028,15 +992,15 @@
           "required": true
         },
         {
-          "skill": "RESTful API",
-          "original_text": "",
-          "category": "infra",
-          "required": true
-        },
-        {
           "skill": "Backend Development",
           "original_text": "",
           "category": "other",
+          "required": true
+        },
+        {
+          "skill": "RESTful API",
+          "original_text": "",
+          "category": "infra",
           "required": true
         },
         {
@@ -1112,21 +1076,21 @@
           "required": true
         },
         {
-          "skill": "LLM Evaluation",
-          "original_text": "",
-          "category": "ml",
-          "required": true
-        },
-        {
           "skill": "MCP",
           "original_text": "",
           "category": "llm",
           "required": false
         },
         {
-          "skill": "AnythingLLM",
+          "skill": "Open-Source LLM Evaluation",
           "original_text": "",
-          "category": "framework",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "LLM Application Platform",
+          "original_text": "",
+          "category": "llm",
           "required": false
         },
         {
@@ -1136,33 +1100,9 @@
           "required": false
         },
         {
-          "skill": "Dify",
+          "skill": "LLM Application Framework",
           "original_text": "",
-          "category": "framework",
-          "required": false
-        },
-        {
-          "skill": "Open WebUI",
-          "original_text": "",
-          "category": "framework",
-          "required": false
-        },
-        {
-          "skill": "Flowise",
-          "original_text": "",
-          "category": "framework",
-          "required": false
-        },
-        {
-          "skill": "LangChain",
-          "original_text": "",
-          "category": "framework",
-          "required": false
-        },
-        {
-          "skill": "LlamaIndex",
-          "original_text": "",
-          "category": "framework",
+          "category": "llm",
           "required": false
         },
         {
@@ -1178,19 +1118,7 @@
           "required": false
         },
         {
-          "skill": "PDF Parsing",
-          "original_text": "",
-          "category": "data",
-          "required": false
-        },
-        {
-          "skill": "LoRA / QLoRA",
-          "original_text": "",
-          "category": "ml",
-          "required": false
-        },
-        {
-          "skill": "GGUF",
+          "skill": "LoRA Fine-tuning",
           "original_text": "",
           "category": "ml",
           "required": false
@@ -1198,13 +1126,13 @@
         {
           "skill": "llama.cpp",
           "original_text": "",
-          "category": "ml",
+          "category": "llm",
           "required": false
         },
         {
           "skill": "vLLM",
           "original_text": "",
-          "category": "ml",
+          "category": "infra",
           "required": false
         },
         {
@@ -1212,6 +1140,1386 @@
           "original_text": "",
           "category": "ml",
           "required": false
+        },
+        {
+          "skill": "Requirement Analysis",
+          "original_text": "",
+          "category": "soft",
+          "required": true
+        },
+        {
+          "skill": "Technical Writing",
+          "original_text": "",
+          "category": "soft",
+          "required": true
+        }
+      ],
+      "responsibilities": []
+    }
+  },
+  {
+    "job_id": "11",
+    "role": "ml",
+    "job": {
+      "title": "Machine Learning Engineer",
+      "company": "洞見未來科技股份有限公司",
+      "min_years": null,
+      "requirements": [
+        {
+          "skill": "Machine Learning",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Mathematics",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Probability and Statistics",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Algorithms",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Python",
+          "original_text": "",
+          "category": "language",
+          "required": true
+        },
+        {
+          "skill": "C/C++",
+          "original_text": "",
+          "category": "language",
+          "required": false
+        },
+        {
+          "skill": "Keras",
+          "original_text": "",
+          "category": "framework",
+          "required": true
+        },
+        {
+          "skill": "TensorFlow",
+          "original_text": "",
+          "category": "framework",
+          "required": true
+        },
+        {
+          "skill": "PyTorch",
+          "original_text": "",
+          "category": "framework",
+          "required": true
+        },
+        {
+          "skill": "scikit-learn",
+          "original_text": "",
+          "category": "framework",
+          "required": true
+        }
+      ],
+      "responsibilities": []
+    }
+  },
+  {
+    "job_id": "12",
+    "role": "ml",
+    "job": {
+      "title": "AI/ML 應用工程師",
+      "company": "皓展資訊股份有限公司",
+      "min_years": null,
+      "requirements": [
+        {
+          "skill": "Python",
+          "original_text": "",
+          "category": "language",
+          "required": true
+        },
+        {
+          "skill": "TensorFlow",
+          "original_text": "",
+          "category": "framework",
+          "required": true
+        },
+        {
+          "skill": "PyTorch",
+          "original_text": "",
+          "category": "framework",
+          "required": true
+        },
+        {
+          "skill": "Scikit-learn",
+          "original_text": "",
+          "category": "framework",
+          "required": true
+        },
+        {
+          "skill": "AI Model Integration",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Backend Development",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "FastAPI",
+          "original_text": "",
+          "category": "framework",
+          "required": false
+        },
+        {
+          "skill": "Django",
+          "original_text": "",
+          "category": "framework",
+          "required": false
+        },
+        {
+          "skill": "Flask",
+          "original_text": "",
+          "category": "framework",
+          "required": false
+        },
+        {
+          "skill": "Node.js",
+          "original_text": "",
+          "category": "framework",
+          "required": false
+        },
+        {
+          "skill": "Data Cleaning",
+          "original_text": "",
+          "category": "data",
+          "required": true
+        },
+        {
+          "skill": "Feature Engineering",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Model Training",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Database",
+          "original_text": "",
+          "category": "data",
+          "required": true
+        },
+        {
+          "skill": "PostgreSQL",
+          "original_text": "",
+          "category": "data",
+          "required": true
+        },
+        {
+          "skill": "MySQL",
+          "original_text": "",
+          "category": "data",
+          "required": true
+        },
+        {
+          "skill": "MongoDB",
+          "original_text": "",
+          "category": "data",
+          "required": true
+        },
+        {
+          "skill": "Vector Database",
+          "original_text": "",
+          "category": "data",
+          "required": true
+        },
+        {
+          "skill": "Docker",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "Kubernetes",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "MLOps",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "NLP",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Computer Vision",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "LLM",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "RESTful API",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "gRPC",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "GraphQL",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "SQL",
+          "original_text": "",
+          "category": "data",
+          "required": true
+        },
+        {
+          "skill": "NoSQL",
+          "original_text": "",
+          "category": "data",
+          "required": true
+        },
+        {
+          "skill": "Technical Documentation",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "LLM API Integration",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
+          "skill": "LLM Fine-tuning",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
+          "skill": "Vue",
+          "original_text": "",
+          "category": "framework",
+          "required": false
+        },
+        {
+          "skill": "React",
+          "original_text": "",
+          "category": "framework",
+          "required": false
+        },
+        {
+          "skill": "CI/CD",
+          "original_text": "",
+          "category": "infra",
+          "required": false
+        },
+        {
+          "skill": "Data Annotation",
+          "original_text": "",
+          "category": "data",
+          "required": false
+        },
+        {
+          "skill": "Data Collection",
+          "original_text": "",
+          "category": "data",
+          "required": false
+        }
+      ],
+      "responsibilities": []
+    }
+  },
+  {
+    "job_id": "13",
+    "role": "ai-product",
+    "job": {
+      "title": "AI應用工程師",
+      "company": "偉利科技股份有限公司",
+      "min_years": null,
+      "requirements": [
+        {
+          "skill": "Python",
+          "original_text": "",
+          "category": "language",
+          "required": true
+        },
+        {
+          "skill": "TypeScript",
+          "original_text": "",
+          "category": "language",
+          "required": true
+        },
+        {
+          "skill": "React",
+          "original_text": "",
+          "category": "framework",
+          "required": true
+        },
+        {
+          "skill": "LLM API Integration",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Prompt Engineering",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Tool Use",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "AI Agent",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "LLM Evaluation",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "AI Coding Assistant",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Docker",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "CI/CD",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "RAG",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
+          "skill": "MCP",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
+          "skill": "Cloud Platform",
+          "original_text": "",
+          "category": "infra",
+          "required": false
+        }
+      ],
+      "responsibilities": []
+    }
+  },
+  {
+    "job_id": "14",
+    "role": "ai-app",
+    "job": {
+      "title": "AI Agent平台工程師",
+      "company": "谷奧科技股份有限公司",
+      "min_years": 3,
+      "requirements": [
+        {
+          "skill": "Python",
+          "original_text": "",
+          "category": "language",
+          "required": true
+        },
+        {
+          "skill": "AI Agent",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "LLM",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Tool Use",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "ReAct",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Function Calling",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Docker",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "Linux",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "PostgreSQL",
+          "original_text": "",
+          "category": "data",
+          "required": true
+        },
+        {
+          "skill": "Message Queue",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "System Architecture Design",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Technical Writing",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Workflow Orchestration",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "Git",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "CI/CD",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "Issue Tracker Integration",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Slack",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Observability",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "Evaluation Harness",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Agent Production Deployment",
+          "original_text": "",
+          "category": "infra",
+          "required": false
+        },
+        {
+          "skill": "FastAPI",
+          "original_text": "",
+          "category": "framework",
+          "required": false
+        },
+        {
+          "skill": "Laravel",
+          "original_text": "",
+          "category": "framework",
+          "required": false
+        },
+        {
+          "skill": "AWS",
+          "original_text": "",
+          "category": "infra",
+          "required": false
+        },
+        {
+          "skill": "DevOps/SRE",
+          "original_text": "",
+          "category": "infra",
+          "required": false
+        }
+      ],
+      "responsibilities": []
+    }
+  },
+  {
+    "job_id": "15",
+    "role": "ml",
+    "job": {
+      "title": "AI應用工程師",
+      "company": "GARMIN_台灣國際航電股份有限公司",
+      "min_years": null,
+      "requirements": [
+        {
+          "skill": "Machine Learning",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Deep Learning",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Image Processing",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Unix-like Operating System",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "C",
+          "original_text": "",
+          "category": "language",
+          "required": true
+        },
+        {
+          "skill": "C++",
+          "original_text": "",
+          "category": "language",
+          "required": true
+        },
+        {
+          "skill": "Python",
+          "original_text": "",
+          "category": "language",
+          "required": true
+        },
+        {
+          "skill": "Git",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "Linux",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "Bash",
+          "original_text": "",
+          "category": "language",
+          "required": true
+        },
+        {
+          "skill": "Docker",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "Kubernetes",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "MLOps",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Computer Vision",
+          "original_text": "",
+          "category": "ml",
+          "required": false
+        },
+        {
+          "skill": "LLM",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
+          "skill": "Vision Language Model",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
+          "skill": "RAG",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
+          "skill": "Low-Code Platform",
+          "original_text": "",
+          "category": "other",
+          "required": false
+        },
+        {
+          "skill": "Multi-Agent Framework",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
+          "skill": "Audio Anomaly Detection",
+          "original_text": "",
+          "category": "ml",
+          "required": false
+        },
+        {
+          "skill": "Speech Recognition",
+          "original_text": "",
+          "category": "ml",
+          "required": false
+        },
+        {
+          "skill": "Text-to-Speech",
+          "original_text": "",
+          "category": "ml",
+          "required": false
+        }
+      ],
+      "responsibilities": []
+    }
+  },
+  {
+    "job_id": "16",
+    "role": "ai-product",
+    "job": {
+      "title": "AI 驅動軟體工程師",
+      "company": "PRO360 達人網",
+      "min_years": null,
+      "requirements": [
+        {
+          "skill": "AI-Assisted Development Tools",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Frontend Framework",
+          "original_text": "",
+          "category": "framework",
+          "required": true
+        },
+        {
+          "skill": "Node.js",
+          "original_text": "",
+          "category": "framework",
+          "required": true
+        },
+        {
+          "skill": "RESTful API Design",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Git",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Third-party API Integration",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Agile Development",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "SaaS / Marketplace Development",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "System Architecture",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "User Experience Design",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "DevOps Automation",
+          "original_text": "",
+          "category": "other",
+          "required": false
+        },
+        {
+          "skill": "Cloud Deployment",
+          "original_text": "",
+          "category": "infra",
+          "required": false
+        }
+      ],
+      "responsibilities": []
+    }
+  },
+  {
+    "job_id": "17",
+    "role": "ai-app",
+    "job": {
+      "title": "ai應用工程師",
+      "company": "美商達爾國際有限公司台灣分公司",
+      "min_years": 0,
+      "requirements": [
+        {
+          "skill": "AI Agent",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "RAG",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "AI Application Development",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Prompt Engineering",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Function Calling",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Agent Orchestration",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "MCP",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "REST API",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "Enterprise System Integration",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "AI Workflow",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Software Testing",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Responsible AI",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Python",
+          "original_text": "",
+          "category": "language",
+          "required": true
+        },
+        {
+          "skill": "C#/.NET",
+          "original_text": "",
+          "category": "language",
+          "required": true
+        },
+        {
+          "skill": "SQL",
+          "original_text": "",
+          "category": "data",
+          "required": true
+        },
+        {
+          "skill": "Git",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "LLM",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Embedding",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Vector Search",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Azure OpenAI",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
+          "skill": "Copilot Studio",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
+          "skill": "Semantic Kernel",
+          "original_text": "",
+          "category": "framework",
+          "required": false
+        },
+        {
+          "skill": "LangChain",
+          "original_text": "",
+          "category": "framework",
+          "required": false
+        },
+        {
+          "skill": "Vector Database",
+          "original_text": "",
+          "category": "data",
+          "required": false
+        },
+        {
+          "skill": "SharePoint",
+          "original_text": "",
+          "category": "infra",
+          "required": false
+        },
+        {
+          "skill": "Microsoft Graph",
+          "original_text": "",
+          "category": "infra",
+          "required": false
+        },
+        {
+          "skill": "Power Automate",
+          "original_text": "",
+          "category": "infra",
+          "required": false
+        },
+        {
+          "skill": "Docker",
+          "original_text": "",
+          "category": "infra",
+          "required": false
+        },
+        {
+          "skill": "CI/CD",
+          "original_text": "",
+          "category": "infra",
+          "required": false
+        },
+        {
+          "skill": "OAuth",
+          "original_text": "",
+          "category": "infra",
+          "required": false
+        },
+        {
+          "skill": "Microsoft Entra ID",
+          "original_text": "",
+          "category": "infra",
+          "required": false
+        },
+        {
+          "skill": "Document Parsing and OCR",
+          "original_text": "",
+          "category": "ml",
+          "required": false
+        },
+        {
+          "skill": "Multimodal AI",
+          "original_text": "",
+          "category": "ml",
+          "required": false
+        }
+      ],
+      "responsibilities": []
+    }
+  },
+  {
+    "job_id": "18",
+    "role": "ai-product",
+    "job": {
+      "title": "AI 原生全端工程師",
+      "company": "易可思科技股份有限公司",
+      "min_years": 2,
+      "requirements": [
+        {
+          "skill": "Backend Development",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Full-Stack Development",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "System Design",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "AI Agent",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "LLM Integration",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Cursor",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "AI Coding Agent",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Tool Calling",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Context Management",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Model Evaluation",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Agent Testing",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Deployment",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "Monitoring",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "Frontend Development",
+          "original_text": "",
+          "category": "framework",
+          "required": true
+        },
+        {
+          "skill": "Enterprise System Integration",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Agent-to-Agent Collaboration",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
+          "skill": "MCP",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
+          "skill": "RAG",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
+          "skill": "Vector Database",
+          "original_text": "",
+          "category": "data",
+          "required": false
+        },
+        {
+          "skill": "Agent Orchestration",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
+          "skill": "Cloud Deployment",
+          "original_text": "",
+          "category": "infra",
+          "required": false
+        },
+        {
+          "skill": "Production Operations",
+          "original_text": "",
+          "category": "infra",
+          "required": false
+        },
+        {
+          "skill": "Latency Optimization",
+          "original_text": "",
+          "category": "ml",
+          "required": false
+        },
+        {
+          "skill": "Cost Optimization",
+          "original_text": "",
+          "category": "ml",
+          "required": false
+        },
+        {
+          "skill": "Tool Execution Error Handling",
+          "original_text": "",
+          "category": "other",
+          "required": false
+        },
+        {
+          "skill": "Advertising Systems",
+          "original_text": "",
+          "category": "other",
+          "required": false
+        }
+      ],
+      "responsibilities": []
+    }
+  },
+  {
+    "job_id": "19",
+    "role": "ai-app",
+    "job": {
+      "title": "AI 工程師",
+      "company": "卓越資本科技股份有限公司",
+      "min_years": 3,
+      "requirements": [
+        {
+          "skill": "AI Agent",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Tool Calling",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Agent Framework",
+          "original_text": "",
+          "category": "framework",
+          "required": true
+        },
+        {
+          "skill": "LLM Evaluation",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Post-Training",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "LoRA",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Fine-Tuning Framework",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Hugging Face",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "LLM Inference Serving",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "Model Quantization",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Model Selection",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Technical Writing",
+          "original_text": "",
+          "category": "soft",
+          "required": true
+        },
+        {
+          "skill": "Model Context Protocol",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
+          "skill": "AI Safety Governance",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        }
+      ],
+      "responsibilities": []
+    }
+  },
+  {
+    "job_id": "20",
+    "role": "ai-app",
+    "job": {
+      "title": "AI 應用暨自動化工程師",
+      "company": "定曜科技股份有限公司",
+      "min_years": null,
+      "requirements": [
+        {
+          "skill": "Python",
+          "original_text": "",
+          "category": "language",
+          "required": true
+        },
+        {
+          "skill": "JavaScript/TypeScript",
+          "original_text": "",
+          "category": "language",
+          "required": true
+        },
+        {
+          "skill": "REST API",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "SQL",
+          "original_text": "",
+          "category": "data",
+          "required": true
+        },
+        {
+          "skill": "Git",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "RPA",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "System Integration",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "LLM API Integration",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "RAG",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "AI Agent",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Requirement Analysis",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Software Testing",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Debugging",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Code Review",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "AI Coding Tools",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "MCP",
+          "original_text": "",
+          "category": "llm",
+          "required": true
         }
       ],
       "responsibilities": []
