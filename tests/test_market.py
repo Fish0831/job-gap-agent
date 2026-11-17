@@ -36,12 +36,22 @@ def test_aggregate_counts_and_merges_spelling():
     assert stats["Docker"].required_in == ["01"] and stats["Docker"].preferred_in == ["02"]
 
 
-def test_priority_is_demand_times_gap_weight():
+def test_priority_sums_each_job():
     stats = {s.skill: s for s in aggregate(RUNS)}
-    assert priority(stats["RAG"]) == (2 * 3) * 2         # 必備 3 份 × 沒有
+    assert priority(stats["RAG"]) == 2 * 2 + 2 * 2 + 2 * 1  # 01、02 沒有（2×2），03 部分（2×1）→ 10
     assert priority(stats["Docker"]) == (2 * 1 + 1) * 1  # 必備 1 + 加分 1 × 部分
     assert priority(stats["Kubernetes"]) == 1 * 2        # 加分 1 × 沒有
     assert priority(stats["Python"]) == 0                # 有 → 不是缺口
+
+
+def test_priority_one_flip_moves_little():
+    """平手時一次翻轉：舊規則 6 ↔ 12（加倍），新規則只差 2。"""
+    def stat_with(statuses):
+        runs = [run(j, m("CI/CD", s, required=req)) for (j, s, req) in statuses]
+        return {s.skill: s for s in aggregate(runs)}["CI/CD"]
+    a = stat_with([("01", "partial", True), ("02", "missing", True)])
+    b = stat_with([("01", "missing", True), ("02", "missing", True)])
+    assert (priority(a), priority(b)) == (6, 8)
 
 
 def test_top_gaps_and_strengths():
@@ -53,7 +63,7 @@ def test_top_gaps_and_strengths():
 def test_markdown_has_sections_and_scope():
     md = to_markdown(RUNS, aggregate(RUNS), cost_usd=0.01, created_at=datetime(2026, 11, 6, 14, 0))
     assert md.startswith("# 市場缺口報告（3 份職缺）")
-    assert "| 1 | RAG | 3／3 | 0 | ❌ 沒有 ⚠️ 沒有 2／部分 1 | 12 | 01、02、03 |" in md
+    assert "| 1 | RAG | 3／3 | 0 | ❌ 沒有 ⚠️ 沒有 2／部分 1 | 10 | 01、02、03 |" in md  # 逐份加總：2×2 + 2×2 + 2×1
     assert "| 1 | Python | 2／3 | ✅ 有（working） | p1 |" in md
     assert "- **RAG**：01 沒有、02 沒有、03 部分" in md
     assert "| 03 | Job 03 | ACME | 1 |" in md

@@ -3,7 +3,7 @@
 全部由程式計算，不呼叫 LLM（比對結果已經在 ③ 做好）：
 - aggregate()      依技能彙總：出現在幾份必備、幾份加分、每份我的狀態
 - overall_status() 跨職缺的「我的狀態」：取最常見的；平手取比較差的（保守）
-- priority()       優先度 = 需求分數 × 缺口權重
+- priority()       優先度 = 每份職缺各算一次再加總：必備 2／加分 1 × 那一份的缺口權重（沒有 2、部分 1、有 0）
 - job_fit()        每份職缺的適合度 = (有 + 0.5 × 部分) ÷ 必備數 → rank_jobs() 排出最適合的職缺
 - role_fit()       依職務類別平均適合度 → 使用者最接近哪一類
 - to_markdown()    回傳字串，不直接寫檔 → 之後網頁版可以直接拿來顯示
@@ -65,8 +65,11 @@ def overall_status(statuses: list[Status]) -> Status:
 
 
 def priority(stat: SkillStat) -> int:
-    """數字越大越該先補。我已經「有」的技能是 0。"""
-    return stat.demand * GAP_WEIGHT[stat.status]
+    """數字越大越該先補。每份職缺各算一次再加總（必備 2、加分 1，× 那一份我的缺口權重）。
+    舊寫法是「需求分數 × 取多數後的狀態權重」：剛好平手時一次判斷翻轉，整個優先度就加倍或減半。
+    新寫法：所有職缺判斷一致時結果和舊的一樣；不一致時，一次翻轉只影響那一份（必備差 2、加分差 1）。"""
+    return (sum(2 * GAP_WEIGHT[stat.statuses[j]] for j in stat.required_in)
+            + sum(GAP_WEIGHT[stat.statuses[j]] for j in stat.preferred_in))
 
 
 def aggregate(runs: list[Run]) -> list[SkillStat]:
@@ -152,7 +155,7 @@ def to_markdown(runs: list[Run], stats: list[SkillStat], cost_usd: float | None 
         "",
         f"- 產生時間：{created_at:%Y-%m-%d %H:%M}",
         f"- 樣本：{n} 份職缺、{len(stats)} 個不同的技能（已統一名稱、排除軟實力）",
-        "- 優先度 = 需求分數（必備 2 分、加分 1 分，逐份加總）× 缺口權重（沒有 2、部分 1、有 0）",
+        "- 優先度 = 每份職缺的缺口加總：必備 2 分、加分 1 分，× 那一份的缺口權重（沒有 2、部分 1、有 0）",
         "- 我的狀態：各份職缺的判斷取最常見的，平手取比較差的；⚠️ = 各份判斷不一致",
         "",
         "## 最該先補的技能",

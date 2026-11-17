@@ -31,6 +31,7 @@ from job_agent.samples import SAMPLES_FILE, load_roles, load_samples
 MAX_RUNS_PER_SESSION = 3
 MIN_ROLE_SAMPLES = 3     # 某個職務類別至少要有幾份樣本，才放進選項／算「最接近的類別」（太少統計沒意義）
 TOP_FITS = 5             # 「最適合你的職缺」列幾份
+ROLE_GAP = 0.10          # 第一名比第二名的平均適合度高這麼多，才說「最接近」（樣本少，差一點不算數）
 ALL_ROLES = "全部職務"
 STATUS_TEXT = {"have": "有", "partial": "部分", "missing": "沒有"}
 STATUS_COLOR = {"missing": "#E24B4A", "partial": "#EF9F27"}  # 長條圖：沒有＝紅、部分＝橘
@@ -151,7 +152,7 @@ def gap_chart(gaps: list[SkillStat]) -> alt.Chart:
         alt.Chart(alt.Data(values=data))
         .mark_bar(cornerRadiusEnd=4)
         .encode(
-            x=alt.X("優先度:Q", title="優先度（需求分數 × 缺口權重）"),
+            x=alt.X("優先度:Q", title="優先度（每份職缺的缺口加總）"),
             y=alt.Y("技能:N", sort="-x", title=None,
                     axis=alt.Axis(labelOverlap=False, labelLimit=220, labelFontSize=13)),  # 每個技能名稱都要顯示
             color=alt.Color("狀態:N", scale=alt.Scale(domain=["沒有", "部分"],
@@ -170,9 +171,12 @@ def show_fit(runs, samples_by_id, roles: dict[str, str]) -> None:
         st.markdown("**🎯 最適合你的職缺**")
         close = role_fit(fits, roles, min_jobs=MIN_ROLE_SAMPLES)
         if len(close) >= 2:  # 至少比較兩個類別才有意義（只分析一類時不顯示）
-            best, avg, k = close[0]
-            others = "、".join(f"{ROLES[r]} {a:.0%}" for r, a, _ in close[1:])
-            st.markdown(f"你最接近 **{ROLES[best]}**（{k} 份平均適合度 {avg:.0%}；{others}）")
+            detail = "、".join(f"{ROLES[r]} {a:.0%}（{k} 份）" for r, a, k in close)
+            (best, avg, _), (second, avg2, _) = close[0], close[1]
+            if avg - avg2 >= ROLE_GAP:
+                st.markdown(f"你最接近 **{ROLES[best]}**（平均適合度：{detail}）")
+            else:  # 差距太小＋樣本少 → 不下結論
+                st.markdown(f"你和 **{ROLES[best]}**、**{ROLES[second]}** 差不多接近（平均適合度：{detail}）")
         st.dataframe(
             [{
                 "適合度": f.fit,
@@ -209,7 +213,7 @@ def show_report(runs, samples_by_id, role_label: str, roles: dict[str, str]) -> 
         st.markdown("**最該先補的技能**")
         if gaps:
             st.altair_chart(gap_chart(gaps), width="stretch")
-            st.caption("優先度 = 需求分數（必備 2、加分 1，逐份加總）× 缺口權重（沒有 2、部分 1）。"
+            st.caption("優先度 = 每份職缺各算一次再加總：必備 2 分、加分 1 分，× 那一份的缺口權重（沒有 2、部分 1、有 0）。"
                        "⚠ = 這個技能在不同職缺被判成不同狀態（判斷不穩定），排名可能會跳動。滑鼠移到長條上可以看各份的判斷。")
         else:
             st.success("樣本職缺的技能你都有作品證明了。")

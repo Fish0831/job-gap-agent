@@ -48,13 +48,14 @@ def test_repo_synonyms_file_loads():
     assert canonical("Claude API", syn) == "LLM API Integration"
 
 # 軟實力：程式的第二道防線
-def test_drop_soft_removes_soft_category_and_listed_names():
+def test_drop_soft_uses_name_list_not_category():
     reqs = [
         Requirement(skill="Analytical Problem Solving", original_text="x", category="other", required=True),
         Requirement(skill="Mentoring", original_text="x", category="soft", required=True),
         Requirement(skill="Requirement Analysis", original_text="x", category="other", required=True),
+        Requirement(skill="Technical Writing", original_text="x", category="soft", required=True),  # 模型標成 soft 也要留
     ]
-    assert [r.skill for r in drop_soft(reqs)] == ["Requirement Analysis"]
+    assert [r.skill for r in drop_soft(reqs)] == ["Requirement Analysis", "Technical Writing"]
 
 
 # 拆解偶爾把舉例寫進技能名稱 → 去掉括號，才能和同一個技能合併

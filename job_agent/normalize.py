@@ -29,6 +29,7 @@ SOFT_SKILLS = {
     "Teamwork", "Collaboration", "Team Collaboration", "Cross-functional Collaboration",
     "Learning Ability", "Self-learning", "Self-motivation", "Passion", "Curiosity",
     "Attention to Detail", "Time Management", "Adaptability", "Responsibility", "Leadership",
+    "Mentoring", "Ownership", "Initiative", "Interpersonal Skills",
 }
 
 
@@ -69,6 +70,8 @@ def unify(requirements: list[Requirement], synonyms: dict[str, str]) -> list[Req
 
 
 def drop_soft(requirements: list[Requirement]) -> list[Requirement]:
-    """去掉軟實力：拆解時標成 soft 類別的，或名稱在 SOFT_SKILLS 裡的。"""
+    """去掉軟實力：只看名稱在不在 SOFT_SKILLS 裡。
+    不看模型標的 category：同一個技能每次可能被標成不同類別（例如 Requirement Analysis、Technical Writing
+    有時被標成 soft），拿它決定去留會讓真正的專業能力被丟掉。名單是程式查表，結果固定。"""
     soft = {key(name) for name in SOFT_SKILLS}
-    return [r for r in requirements if r.category != "soft" and key(r.skill) not in soft]
+    return [r for r in requirements if key(r.skill) not in soft]
