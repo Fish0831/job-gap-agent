@@ -22,14 +22,15 @@ import streamlit as st
 from anthropic import APIError
 
 from job_agent.llm import LLMError, model_for
-from job_agent.market import SkillStat, aggregate, priority, strengths, top_gaps
+from job_agent.market import SkillStat, aggregate, priority, rank_jobs, role_fit, strengths, top_gaps
 from job_agent.pipeline import analyze
 from job_agent.resume import profile_from_text, read_resume_bytes, status_of, to_yaml
 from job_agent.roles import ROLE_HINTS, ROLES
 from job_agent.samples import SAMPLES_FILE, load_roles, load_samples
 
 MAX_RUNS_PER_SESSION = 3
-MIN_ROLE_SAMPLES = 3     # 某個職務類別至少要有幾份樣本，才放進選項（太少統計沒意義）
+MIN_ROLE_SAMPLES = 3     # 某個職務類別至少要有幾份樣本，才放進選項／算「最接近的類別」（太少統計沒意義）
+TOP_FITS = 5             # 「最適合你的職缺」列幾份
 ALL_ROLES = "全部職務"
 STATUS_TEXT = {"have": "有", "partial": "部分", "missing": "沒有"}
 STATUS_COLOR = {"missing": "#E24B4A", "partial": "#EF9F27"}  # 長條圖：沒有＝紅、部分＝橘
@@ -118,10 +119,10 @@ def choose_role(samples, roles: dict[str, str]) -> str | None:
     if len(options) == 1:  # 樣本還沒標職務類別 → 不顯示選項
         return None
     role = st.radio(
-        "目標職務", options, horizontal=True,
+        "只看某個職務（選填）", options, horizontal=True,
         format_func=lambda r: f"{ALL_ROLES}（{len(samples)} 份）" if r is None else f"{ROLES[r]}（{counts[r]} 份）",
     )
-    st.caption(ROLE_HINTS[role] if role else "所有樣本職缺一起統計。選一個職務，報告只看那一類職缺的要求。")
+    st.caption(ROLE_HINTS[role] if role else "不用選：所有樣本職缺一起統計，報告會告訴你最適合哪些職缺、最接近哪一類。")
     return role
 
 
@@ -162,7 +163,33 @@ def gap_chart(gaps: list[SkillStat]) -> alt.Chart:
     )
 
 
-def show_report(runs, samples_by_id, role_label: str) -> None:
+def show_fit(runs, samples_by_id, roles: dict[str, str]) -> None:
+    """最適合你的職缺 Top 5＋你最接近的職務類別。全部由程式計算（market.rank_jobs、role_fit），不花錢。"""
+    fits = rank_jobs(runs)
+    with st.container(border=True):
+        st.markdown("**🎯 最適合你的職缺**")
+        close = role_fit(fits, roles, min_jobs=MIN_ROLE_SAMPLES)
+        if len(close) >= 2:  # 至少比較兩個類別才有意義（只分析一類時不顯示）
+            best, avg, k = close[0]
+            others = "、".join(f"{ROLES[r]} {a:.0%}" for r, a, _ in close[1:])
+            st.markdown(f"你最接近 **{ROLES[best]}**（{k} 份平均適合度 {avg:.0%}；{others}）")
+        st.dataframe(
+            [{
+                "適合度": f.fit,
+                "職稱": samples_by_id[f.job_id].title if f.job_id in samples_by_id else f.job_id,
+                "公司": (samples_by_id[f.job_id].company or "—") if f.job_id in samples_by_id else "—",
+                "職務": ROLES.get(roles.get(f.job_id, ""), "—"),
+                "必備缺口": f"{f.missing_required} / {f.n_required}",
+            } for f in fits[:TOP_FITS]],
+            column_config={"適合度": st.column_config.ProgressColumn("適合度", min_value=0, max_value=1,
+                                                                    format="percent")},
+            hide_index=True, width="stretch",
+        )
+        st.caption("適合度 = (有 + 0.5 × 部分) ÷ 必備技能數，只看必備技能，年資不算進來。"
+                   "必備缺口 = 必備技能裡「沒有」的數量。")
+
+
+def show_report(runs, samples_by_id, role_label: str, roles: dict[str, str]) -> None:
     stats = aggregate(runs)
     n = len(runs)
     required = [s for s in stats if s.required_in]
@@ -175,6 +202,8 @@ def show_report(runs, samples_by_id, role_label: str) -> None:
     c2.metric("必備技能：有／部分／沒有", f"{counts['have']} / {counts['partial']} / {counts['missing']}",
               "各技能跨職缺的判斷", **card)
     c3.metric("最該先補", gaps[0].skill if gaps else "—", f"優先度 {priority(gaps[0])}" if gaps else None, **card)
+
+    show_fit(runs, samples_by_id, roles)
 
     with st.container(border=True):
         st.markdown("**最該先補的技能**")
@@ -238,13 +267,13 @@ def show_draft(result: dict) -> None:
                        mime="text/yaml")
 
 
-def show_result(result: dict, samples) -> None:
+def show_result(result: dict, samples, roles: dict[str, str]) -> None:
     if result["failed"]:
         st.warning(f"有 {len(result['failed'])} 份職缺比對失敗（{'、'.join(result['failed'])}），"
                    f"報告只包含其他 {len(result['runs'])} 份。")
     tab_report, tab_draft = st.tabs(["📊 市場缺口報告", "📝 技能草稿"])
     with tab_report:
-        show_report(result["runs"], dict(samples), result.get("role_label", ALL_ROLES))
+        show_report(result["runs"], dict(samples), result.get("role_label", ALL_ROLES), roles)
     with tab_draft:
         show_draft(result)
 
@@ -252,8 +281,8 @@ def show_result(result: dict, samples) -> None:
 def main() -> None:
     load_secrets()
     st.title("🧭 履歷技能缺口分析")
-    st.markdown("選目標職務、上傳履歷，看看你的技能和**樣本職缺**的要求差在哪裡：哪些有作品可以證明、哪些只有一部分、"
-                "哪些還沒有，以及最值得先補的技能。")
+    st.markdown("上傳履歷，看看你的技能和**樣本職缺**的要求差在哪裡：哪些有作品可以證明、哪些只有一部分、"
+                "哪些還沒有、最值得先補的技能，以及**最適合你的職缺和職務類別**。")
 
     if not SAMPLES_FILE.exists():
         st.error(f"找不到樣本職缺 {SAMPLES_FILE}：請先執行 python -m job_agent.samples jobs")
@@ -283,7 +312,7 @@ def main() -> None:
                 st.error(f"呼叫 Claude 失敗，請稍後再試（{type(e).__name__}）")
 
     if "result" in st.session_state:  # 存在 session_state：按下載按鈕重新整理時結果不會消失
-        show_result(st.session_state["result"], samples)  # 用全部樣本查公司名稱：分析後換了職務也查得到
+        show_result(st.session_state["result"], samples, roles)  # 用全部樣本查公司名稱：分析後換了職務也查得到
 
 
 main()

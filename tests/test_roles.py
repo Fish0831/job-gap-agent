@@ -94,3 +94,27 @@ def test_app_hides_role_choice_for_old_samples(tmp_path, monkeypatch):
     at = AppTest.from_file(str(APP), default_timeout=30).run()
     assert not at.exception
     assert len(at.radio) == 0                                    # 不顯示選項，照舊全部比對
+
+
+def test_app_result_shows_closest_role_and_top_jobs(tmp_path, monkeypatch):
+    """結果頁：最適合的職缺依適合度排序；兩個類別都夠 3 份 → 顯示「你最接近 …」。不呼叫 LLM。"""
+    from job_agent.market import Run
+    from job_agent.schemas import JobRequirements, MatchResult, Profile
+
+    monkeypatch.chdir(tmp_path)
+    samples_file(tmp_path, ["ai-app"] * 3 + ["ml"] * 3)
+    job = JobRequirements.model_validate(JOB)
+
+    def run(jid, status):  # 每份只有一個必備技能 Python
+        return Run(jid, job, [MatchResult(skill="Python", required=True, status=status)])
+
+    runs = [run("01", "have"), run("02", "have"), run("03", "partial"),        # ai-app 平均 83%
+            run("04", "missing"), run("05", "partial"), run("06", "missing")]  # ml 平均 17%
+    at = AppTest.from_file(str(APP), default_timeout=30)
+    at.session_state["result"] = {"profile": Profile(evidence=[], skills=[]), "notes": [],
+                                  "runs": runs, "failed": [], "cost": 0.0}
+    at.run()
+    assert not at.exception
+    assert any("你最接近 **AI 應用／Agent 工程師**" in md.value for md in at.markdown)
+    top = at.dataframe[1].value                                 # [0] 樣本職缺、[1] 最適合的職缺
+    assert len(top) == 5 and list(top["適合度"][:3]) == [1.0, 1.0, 0.5]

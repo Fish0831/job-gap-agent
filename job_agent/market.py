@@ -4,6 +4,8 @@
 - aggregate()      依技能彙總：出現在幾份必備、幾份加分、每份我的狀態
 - overall_status() 跨職缺的「我的狀態」：取最常見的；平手取比較差的（保守）
 - priority()       優先度 = 需求分數 × 缺口權重
+- job_fit()        每份職缺的適合度 = (有 + 0.5 × 部分) ÷ 必備數 → rank_jobs() 排出最適合的職缺
+- role_fit()       依職務類別平均適合度 → 使用者最接近哪一類
 - to_markdown()    回傳字串，不直接寫檔 → 之後網頁版可以直接拿來顯示
 """
 
@@ -17,6 +19,7 @@ from job_agent.report import ICON, REPORT_DIR, _cell
 from job_agent.schemas import JobRequirements, MatchResult, Status
 
 GAP_WEIGHT = {"missing": 2, "partial": 1, "have": 0}  # 沒有 > 部分 > 有
+FIT_WEIGHT = {"have": 1.0, "partial": 0.5, "missing": 0.0}  # 適合度：有 1 分、部分 0.5 分
 WORSE_FIRST = ["missing", "partial", "have"]           # 平手時取前面的（比較差的）
 TOP_N = 10
 
@@ -92,6 +95,38 @@ def strengths(stats: list[SkillStat], n: int = TOP_N) -> list[SkillStat]:
     """我最有競爭力的技能：我「有」，而且很多份職缺列為必備。"""
     have = [s for s in stats if s.status == "have" and s.required_in]
     return sorted(have, key=lambda s: (-len(s.required_in), -s.demand, s.skill.lower()))[:n]
+
+
+# ===== 適合度（程式規則）=====
+
+@dataclass
+class JobFit:
+    job_id: str
+    fit: float              # 0–1：(有 + 0.5 × 部分) ÷ 必備數
+    n_required: int
+    missing_required: int   # 必備技能裡「沒有」的數量
+
+
+def job_fit(run: Run) -> JobFit:
+    """一份職缺有多適合我：只看必備技能（沒有必備技能的職缺才看全部）。年資不算進來。"""
+    req = [r for r in run.results if r.required] or run.results
+    fit = sum(FIT_WEIGHT[r.status] for r in req) / len(req) if req else 0.0
+    return JobFit(run.job_id, round(fit, 3), len(req), sum(r.status == "missing" for r in req))
+
+
+def rank_jobs(runs: list[Run]) -> list[JobFit]:
+    """適合度高的在前；同分時必備缺口少的在前，再依職缺編號（結果固定）。"""
+    return sorted((job_fit(r) for r in runs), key=lambda f: (-f.fit, f.missing_required, f.job_id))
+
+
+def role_fit(fits: list[JobFit], roles: dict[str, str], min_jobs: int = 1) -> list[tuple[str, float, int]]:
+    """依職務類別平均適合度 → [(類別, 平均適合度, 份數)]，高的在前。沒有類別或份數太少的不算。"""
+    groups: dict[str, list[float]] = {}
+    for f in fits:
+        if roles.get(f.job_id):
+            groups.setdefault(roles[f.job_id], []).append(f.fit)
+    rows = [(r, round(sum(v) / len(v), 3), len(v)) for r, v in groups.items() if len(v) >= min_jobs]
+    return sorted(rows, key=lambda x: (-x[1], -x[2], x[0]))
 
 
 # ===== Markdown =====

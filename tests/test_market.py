@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from job_agent.market import Run, aggregate, overall_status, priority, strengths, to_markdown, top_gaps
+from job_agent.market import (Run, aggregate, job_fit, overall_status, priority, rank_jobs, role_fit,
+                              strengths, to_markdown, top_gaps)
 from job_agent.schemas import JobRequirements, MatchResult
 
 
@@ -56,3 +57,26 @@ def test_markdown_has_sections_and_scope():
     assert "| 1 | Python | 2／3 | ✅ 有（working） | p1 |" in md
     assert "- **RAG**：01 沒有、02 沒有、03 部分" in md
     assert "| 03 | Job 03 | ACME | 1 |" in md
+
+# 適合度：(有 + 0.5 × 部分) ÷ 必備數；只看必備
+def test_job_fit_counts_only_required():
+    f = job_fit(RUNS[1])                 # 02：RAG 沒有、Python 有（必備）；Docker 部分（加分，不算）
+    assert (f.fit, f.n_required, f.missing_required) == (0.5, 2, 1)
+
+
+def test_job_fit_without_required_uses_all():
+    f = job_fit(run("09", m("Go", "partial", required=False), m("Rust", "have", required=False)))
+    assert f.fit == 0.75 and f.n_required == 2
+
+
+def test_rank_jobs_order_and_ties():
+    # 01：(0 + 1 + 0.5)/3 = 0.5、缺 1；02：0.5、缺 1；03：(0.5)/1 = 0.5、缺 0 → 03 先（缺口少），01、02 依編號
+    assert [f.job_id for f in rank_jobs(RUNS)] == ["03", "01", "02"]
+
+
+def test_role_fit_average_and_min_jobs():
+    fits = rank_jobs(RUNS)
+    roles = {"01": "ml", "02": "ml", "03": "ai-app"}
+    assert role_fit(fits, roles) == [("ml", 0.5, 2), ("ai-app", 0.5, 1)]   # 同分：份數多的在前
+    assert role_fit(fits, roles, min_jobs=2) == [("ml", 0.5, 2)]            # 份數太少的不算
+    assert role_fit(fits, {}) == []                                          # 沒有類別 → 空的
