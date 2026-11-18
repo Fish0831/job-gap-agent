@@ -12,7 +12,7 @@ from job_agent.extract import read_job
 ROLES = {
     "ai-app": "AI 應用／Agent 工程師",
     "ml": "ML 工程師",
-    "ai-product": "AI 產品工程師",
+    "ai-product": "AI 原生全端工程師",  # 11/18 改名：這類職缺實際是用 AI coding 工具做全端開發
 }
 
 # 標類別時的判斷依據（網頁上也會顯示給使用者看）

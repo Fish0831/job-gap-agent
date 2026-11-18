@@ -28,12 +28,13 @@ LLM API Integration:
   - LLM API
   - LLM APIs
   - Cloud LLM API
+  - LLM Integration          # N2（11/18 核准）
 
 LLM: [Large Language Model, Large Language Models, LLMs]
 RAG: [Retrieval-Augmented Generation, Retrieval Augmented Generation]
 Kubernetes: [K8s]
 Git: [Version Control, GitHub]
-REST API: [RESTful API, RESTful APIs]
+REST API: [RESTful API, RESTful APIs, RESTful API Design, API Development]   # N1（11/18 核准）
 Machine Learning: [ML]
 Deep Learning: [DL]
 Natural Language Processing: [NLP]
@@ -89,7 +90,7 @@ Model Monitoring: [ML Model Monitoring]
 # R3：「Design」是多餘的（會系統架構＝會設計系統架構）。
 #     樣本：System Architecture 01R 16R、System Architecture Design 03p 14R。
 #     System Design（01R 18R）還沒併進來 → 待決定 N3。
-System Architecture: [System Architecture Design]
+System Architecture: [System Architecture Design, System Design]   # N3（11/18 核准）
 
 # R3：軟體職缺裡的「Testing」就是軟體測試。樣本：Software Testing 01R 17R 20R、Testing 09R。
 #     不包含 Test Automation（03p）和 Agent Testing（18R）：範圍比較窄，是不同的能力。
@@ -123,28 +124,33 @@ JavaScript: [JS]
 TypeScript: [TS]
 Azure: [Microsoft Azure]
 
-# ===== 待決定 N1–N10（還沒合併；核准後照下面的說明改，細節見 docs/naming-and-any-of.md 第 6 節） =====
-# 核准的話：「加到既有那一組」的，把寫法加進上面那一行；「新的一組」的，把開頭的 # 拿掉。
-#
-# 1. API 家族（加到既有的 REST API 那一組）：RESTful API Design、API Development
-# 2. LLM 應用開發（新的一組）：
-# LLM Application Development: [AI Application Development, AI-Powered Application Development]
-#    另外 LLM Integration 加到既有的 LLM API Integration 那一組
-# 3. System Design（加到既有的 System Architecture 那一組）
-# 4. 組合名稱（新的三組）：
-# C++: [C/C++]
-# DevOps: [DevOps/SRE]
-# Statistics: [Probability and Statistics]
-# 5. 一般名稱 → 實際上的那個工具（新的兩組；和 Version Control → Git 同一種做法）：
-# Docker: [Containerization]
-# Linux: [Unix-like Operating System]
-# 6. Shell（新的一組）：
-# Shell Scripting: [Bash, Bash Scripting, Shell Script]
-# 7. AI 工作流程（新的一組，要先對照 09、17 號原文）：
-# AI Workflow Automation: [AI Workflow]
-# 8. 自架 LLM（新的一組）：
-# LLM Inference Serving: [Open-Source LLM Deployment]
-# 9. 大量資料分析（新的一組）：
-# Large-Scale Data Analysis: [Large-Scale Database Data Analysis]
-# 10. 系統整合（新的一組）：
-# System Integration: [Enterprise System Integration]
+# ===== 11/18 核准的待決定 N1–N10（N7 對照原文後也核准；理由見 docs/naming-and-any-of.md 第 6 節） =====
+# N1 REST API、N2 LLM Integration、N3 System Design 已加進上面既有的組；下面是新的組。
+
+# N2：做 LLM／AI 應用的不同叫法（R4）。和 LLM API Integration 不併：做應用比串 API 範圍大。
+LLM Application Development: [AI Application Development, AI-Powered Application Development]
+
+# N4：組合名稱先併到主要的那個（等 any_of 上線、拆解改成不接組合名稱後再拿掉）。
+C++: [C/C++]
+DevOps: [DevOps/SRE]
+Statistics: [Probability and Statistics]
+
+# N5：一般名稱 → 實際上的那個工具（和 Version Control → Git 同一種做法）。
+Docker: [Containerization]
+Linux: [Unix-like Operating System]
+
+# N6：Shell。
+Shell Scripting: [Bash, Bash Scripting, Shell Script]
+
+# N8：自己架模型提供推論。
+LLM Inference Serving: [Open-Source LLM Deployment]
+
+# N9：大量資料分析。
+Large-Scale Data Analysis: [Large-Scale Database Data Analysis]
+
+# N10：系統整合。
+System Integration: [Enterprise System Integration]
+
+# N7：對照過原文（11/18）：09「AI workflow automation」、17「建立 AI Workflow」都是用 AI 建立自動化流程。
+#     09 另一行的「AI-assisted coding workflows」是 AI Coding Tools，不在這組。
+AI Workflow Automation: [AI Workflow]

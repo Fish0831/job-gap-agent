@@ -52,7 +52,7 @@ def test_semantic_mapping_is_checked(tmp_path, monkeypatch, fake):
     ]})
     results, stats = match(
         job(req("Containerization"), req("PyTorch"), req("Kubernetes"), req("Go"), req("Rust")),
-        PROFILE, client,
+        PROFILE, client, synonyms={},  # 不用 repo 的同義詞表：測的是 LLM 那段，表改了也不該影響這個測試
     )
     status = {m.skill: m.status for m in results}
     assert client.calls == 1 and stats["llm_called"]
