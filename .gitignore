@@ -24,3 +24,5 @@ cache/
 
 # Streamlit 的金鑰檔（部署時 key 放這裡）
 .streamlit/secrets.toml
+# 評估的標準答案（含職缺原文片段、我的技能和評分）
+gold/
