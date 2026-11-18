@@ -5,6 +5,19 @@
 #   （Scikit-Learn ＝ scikit-learn ＝ scikit learn，Node.js ＝ NodeJS）
 # - 只放「真的是同一個技能」的寫法；相關但不同的技能（例如 LangChain 和 AI Agent）不要放
 # - 統一後的名稱最好和 profile.yaml 的技能名稱一樣，這樣程式就能直接對上、不用問 LLM
+#
+# 2026-11-17 擴充（依據 samples/jobs.json 的 20 份職缺；分析見 docs/naming-and-any-of.md）
+# 每一組的註解 = 合併理由。理由只有四種，不符合任何一種的不放進來：
+#   R1 縮寫＝全名                      MCP ＝ Model Context Protocol
+#   R2 單複數、詞形不同                 Agent Framework ＝ Agent Frameworks
+#   R3 多了一個不改變意思的修飾詞        Model Deployment ＝ ML Model Deployment
+#   R4 同一個機制／同一類工具的不同叫法   Tool Calling ＝ Tool Use ＝ Function Calling
+# 註解裡的數字是職缺編號（R = 必備、p = 加分）。
+#
+# 注意：同一個統一名稱只能出現一次（YAML 遇到重複的 key 不會報錯，只會留最後一個）。
+#       要加新寫法時，加在原本那一組裡，不要另外寫一行。
+
+# ===== 原有的 13 組（沒有改） =====
 
 LLM API Integration:
   - OpenAI API
@@ -28,3 +41,110 @@ Computer Vision: [CV]
 CI/CD: [CICD, Continuous Integration, Continuous Deployment]
 AWS: [Amazon Web Services]
 GCP: [Google Cloud Platform, Google Cloud]
+
+# ===== 2026-11-17 新增：樣本裡實際出現的切碎名稱（12 組） =====
+
+# R4：使用「AI 寫程式工具」是同一個能力，職缺只是叫法不同、或直接寫產品名。
+#     樣本裡 6 個名稱散在 7 份職缺：AI Coding Tools 01R 20R、AI Coding Assistant 02R 03R 13R、
+#     AI Coding Agent 03R 18R、AI-Assisted Development 03R、AI-Assisted Development Tools 16R、Cursor 18R。
+#     產品名比照上面「OpenAI API → LLM API Integration」的做法。
+#     最後一行三個產品名樣本裡還沒出現，是預先加的（同一類工具）。
+#     不包含 Copilot Studio（17p）：那是微軟的低程式碼 agent 平台，不是寫程式工具。
+AI Coding Tools:
+  - AI Coding Tool
+  - AI Coding Assistant
+  - AI Coding Assistants
+  - AI Coding Agent
+  - AI Coding Agents
+  - AI-Assisted Development
+  - AI-Assisted Development Tools
+  - Cursor
+  - Claude Code
+  - GitHub Copilot
+  - Codex
+
+# R4：同一個機制（模型輸出要呼叫哪個工具和參數，由程式執行）。Anthropic 叫 Tool Use，
+#     OpenAI 早期叫 Function Calling，現在各家文件多半寫 Tool Calling。
+#     樣本：Tool Calling 09R 10R 18R 19R、Tool Use 02R 13R 14R、Function Calling 14R 17R。
+Tool Calling: [Tool Use, Function Calling]
+
+# R1：全名。樣本：MCP 02R 10p 13p 17R 18p 20R、Model Context Protocol 19p。
+MCP: [Model Context Protocol]
+
+# R1：全名。樣本：VLM 06R、Vision Language Model 15p。（Vision-Language Model 程式會自動處理）
+VLM: [Vision Language Model, Vision Language Models, VLMs]
+
+# R2＋R3：單複數，加上開頭的「AI」不改變意思。樣本：Agent Framework 19R、AI Agent Frameworks 07p。
+#        不包含 Multi-Agent Framework（15p）和 LLM Application Framework（10p）：範圍不一樣。
+Agent Framework: [Agent Frameworks, AI Agent Framework, AI Agent Frameworks]
+
+# R3：「ML」是多餘的修飾詞（都是把訓練好的模型部署上線）。樣本：Model Deployment 04R、ML Model Deployment 07R。
+#     不包含 Deployment（01R 18R，部署應用程式）和 Cloud Deployment（16p 18p）。
+Model Deployment: [ML Model Deployment]
+
+# R3：同上。樣本：Model Monitoring 06R、ML Model Monitoring 07p。
+#     不包含 Monitoring（18R，應用程式監控）。
+Model Monitoring: [ML Model Monitoring]
+
+# R3：「Design」是多餘的（會系統架構＝會設計系統架構）。
+#     樣本：System Architecture 01R 16R、System Architecture Design 03p 14R。
+#     System Design（01R 18R）還沒併進來 → 待決定 N3。
+System Architecture: [System Architecture Design]
+
+# R3：軟體職缺裡的「Testing」就是軟體測試。樣本：Software Testing 01R 17R 20R、Testing 09R。
+#     不包含 Test Automation（03p）和 Agent Testing（18R）：範圍比較窄，是不同的能力。
+Software Testing: [Testing]
+
+# R3：LoRA 本身就是一種 fine-tuning 方法。樣本：LoRA 19R、LoRA Fine-tuning 10p。
+#     不包含 LLM Fine-tuning（12p）：那是一般的微調，不限 LoRA。
+LoRA: [LoRA Fine-tuning]
+
+# R3：.NET 是 C# 的執行平台，職缺寫「C#/.NET」指的就是會用 C# 開發。樣本：C# 10R、C#/.NET 17R。
+C#: [C#/.NET]
+
+# R2：寫技術文件，名詞和動名詞的差別。樣本：Technical Writing 10R 14R 19R、Technical Documentation 12R。
+Technical Writing: [Technical Documentation]
+
+# ===== 2026-11-17 新增：預先加的縮寫和常見寫法（樣本裡目前只出現其中一種寫法） =====
+# 全部是 R1／R2，不會改變現在的統計；之後的職缺如果用另一種寫法，就不會多出一個新名稱。
+
+scikit-learn: [sklearn]
+Speech Recognition: [ASR, Automatic Speech Recognition]
+Text-to-Speech: [TTS]
+OCR: [Optical Character Recognition]
+RPA: [Robotic Process Automation]
+SDLC: [Software Development Life Cycle]
+AI Agent: [AI Agents]
+React: [React.js]
+Vue: [Vue.js]
+PostgreSQL: [Postgres]
+Go: [Golang]
+JavaScript: [JS]
+TypeScript: [TS]
+Azure: [Microsoft Azure]
+
+# ===== 待決定 N1–N10（還沒合併；核准後照下面的說明改，細節見 docs/naming-and-any-of.md 第 6 節） =====
+# 核准的話：「加到既有那一組」的，把寫法加進上面那一行；「新的一組」的，把開頭的 # 拿掉。
+#
+# 1. API 家族（加到既有的 REST API 那一組）：RESTful API Design、API Development
+# 2. LLM 應用開發（新的一組）：
+# LLM Application Development: [AI Application Development, AI-Powered Application Development]
+#    另外 LLM Integration 加到既有的 LLM API Integration 那一組
+# 3. System Design（加到既有的 System Architecture 那一組）
+# 4. 組合名稱（新的三組）：
+# C++: [C/C++]
+# DevOps: [DevOps/SRE]
+# Statistics: [Probability and Statistics]
+# 5. 一般名稱 → 實際上的那個工具（新的兩組；和 Version Control → Git 同一種做法）：
+# Docker: [Containerization]
+# Linux: [Unix-like Operating System]
+# 6. Shell（新的一組）：
+# Shell Scripting: [Bash, Bash Scripting, Shell Script]
+# 7. AI 工作流程（新的一組，要先對照 09、17 號原文）：
+# AI Workflow Automation: [AI Workflow]
+# 8. 自架 LLM（新的一組）：
+# LLM Inference Serving: [Open-Source LLM Deployment]
+# 9. 大量資料分析（新的一組）：
+# Large-Scale Data Analysis: [Large-Scale Database Data Analysis]
+# 10. 系統整合（新的一組）：
+# System Integration: [Enterprise System Integration]
