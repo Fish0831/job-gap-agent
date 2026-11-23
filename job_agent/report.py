@@ -2,6 +2,7 @@
 
 全部由程式決定，不呼叫 LLM：
 - priority()   缺口的優先順序（必備沒有 > 必備部分 > 加分沒有 > 加分部分）
+- gaps()       「A 或 B」已經滿足的那一組，其他選項不算缺口（anyof.shares 是 0）
 - suggestion() 每個缺口的下一步建議（看狀態和有沒有證據）
 - to_markdown() 回傳字串，不直接寫檔 → 之後網頁版可以直接拿來顯示
 """
@@ -10,6 +11,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from job_agent.anyof import group_count, group_label, shares
+from job_agent.normalize import key
 from job_agent.schemas import GapReport, JobRequirements, MatchResult
 
 REPORT_DIR = Path("reports")
@@ -25,8 +28,10 @@ def priority(m: MatchResult) -> tuple[int, int]:
 
 
 def gaps(results: list[MatchResult]) -> list[MatchResult]:
-    """所有缺口（missing + partial），依優先順序排好。"""
-    return sorted([m for m in results if m.status != "have"], key=priority)
+    """所有缺口（missing + partial），依優先順序排好。
+    「A 或 B」：會其中一個就滿足了，其他選項不算缺口；都還不會時，離你最近的選項排前面。"""
+    share = shares(results)
+    return sorted([m for m in results if m.status != "have" and share.get(key(m.skill), 1.0) > 0], key=priority)
 
 
 def suggestion(m: MatchResult) -> str:
@@ -51,7 +56,8 @@ def _cell(text: str) -> str:
 def _count_line(results: list[MatchResult], required: bool) -> str:
     group = [m for m in results if m.required == required]
     counts = " ／ ".join(f"{ICON[s]} {sum(m.status == s for m in group)}" for s in ICON)
-    return f"{'必備' if required else '加分'} {len(group)} 項：{counts}"
+    k = group_count(group)
+    return f"{'必備' if required else '加分'} {len(group)} 項：{counts}" + (f"（其中 {k} 組是多選一）" if k else "")
 
 
 def to_markdown(report: GapReport, stats: dict | None = None) -> str:
@@ -71,7 +77,8 @@ def to_markdown(report: GapReport, stats: dict | None = None) -> str:
         lines.append("沒有缺口，所有要求都有作品證明。")
     for i, m in enumerate(top, 1):
         tag = "必備" if m.required else "加分"
-        lines.append(f"{i}. **{m.skill}**（{tag}，{ICON[m.status]}）— {suggestion(m)}")
+        label = group_label(m, results)
+        lines.append(f"{i}. **{m.skill}**（{tag}，{ICON[m.status]}{'，' + label if label else ''}）— {suggestion(m)}")
     lines.append("")
 
     lines += [
@@ -83,7 +90,7 @@ def to_markdown(report: GapReport, stats: dict | None = None) -> str:
     order = {"missing": 0, "partial": 1, "have": 2}
     for m in sorted(results, key=lambda m: (not m.required, order[m.status])):
         lines.append(
-            f"| {'必備' if m.required else '加分'} | {_cell(m.skill)} | {ICON[m.status]} "
+            f"| {'必備' if m.required else '加分'} | {_cell(m.skill + (f'（{group_label(m, results)}）' if m.any_of else ''))} | {ICON[m.status]} "
             f"| {m.level or '—'} | {', '.join(m.evidence) or '—'} | {_cell(m.reason)} |"
         )
 

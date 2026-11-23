@@ -1,6 +1,7 @@
 """③ 比對：JobRequirements + Profile → list[MatchResult]。
 
 A. 整理（程式）       去掉軟實力 → 同義詞表換成統一名稱（normalize.py）→ 同一個技能只留一筆，有必備就算必備
+                     →「A 或 B」群組剩不到 2 個成員就取消（anyof.py）
 B. 名稱完全對上（程式） 職缺技能 = profile 的 name 或 aliases（寫法差異、同義詞都算）→ 不呼叫 LLM
 C. 語意對應（LLM）     剩下的一次丟給 Claude：對應到哪個 profile 技能、same / related / none
 D. 檢查＋決定狀態（程式）LLM 給的技能名稱要真的存在；evidence 和 level 從 profile 複製
@@ -11,6 +12,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from job_agent.anyof import normalize_groups
 from job_agent.llm import call_structured, model_for
 from job_agent.normalize import canonical, drop_soft, key, load_synonyms, unify
 from job_agent.schemas import JobRequirements, MatchResult, Profile, ProfileSkill, Requirement
@@ -54,7 +56,9 @@ Rules:
 # ===== A. 統一名稱＋去重 =====
 
 def dedupe(requirements: list[Requirement]) -> list[Requirement]:
-    """同一個 skill（寫法差異不算，見 normalize.key）只留一筆；只要有一筆是必備，就算必備。"""
+    """同一個 skill（寫法差異不算，見 normalize.key）只留一筆；只要有一筆是必備，就算必備。
+    同樣是必備（或同樣是加分）時，單獨列出的優先於「A 或 B」群組裡的：
+    職缺同時寫「熟悉 Python」和「Python 或 C#」→ Python 是一定要的。"""
     kept: dict[str, Requirement] = {}
     for r in requirements:
         k = key(r.skill)
@@ -62,6 +66,8 @@ def dedupe(requirements: list[Requirement]) -> list[Requirement]:
             kept[k] = r
         elif r.required and not kept[k].required:
             kept[k] = r  # 換成必備那一筆（original_text 也跟著換）
+        elif r.required == kept[k].required and kept[k].any_of and not r.any_of:
+            kept[k] = r  # 換成單獨列出的那一筆
     return list(kept.values())
 
 
@@ -116,7 +122,8 @@ def decide(req: Requirement, skill: ProfileSkill | None, how: str, reason: str) 
     """狀態規則全部在這裡：LLM 只給關係，證據和熟練度一律從 profile 拿。
     how：name = 程式名稱對上；same／related／none = LLM 的判斷。"""
     if skill is None or how == "none":
-        return MatchResult(skill=req.skill, required=req.required, status="missing", reason=reason, how="none")
+        return MatchResult(skill=req.skill, required=req.required, status="missing", reason=reason, how="none",
+                           any_of=req.any_of)
     if how in ("name", "same") and skill.evidence:
         status = "have"
     else:
@@ -124,7 +131,7 @@ def decide(req: Requirement, skill: ProfileSkill | None, how: str, reason: str) 
     return MatchResult(
         skill=req.skill, required=req.required, status=status,
         evidence=list(skill.evidence), level=skill.level, reason=reason,
-        how=how, matched_to=skill.name,
+        how=how, matched_to=skill.name, any_of=req.any_of,
     )
 
 
@@ -133,7 +140,7 @@ def match(job: JobRequirements, profile: Profile, client=None, model: str | None
     """model：比對用哪個模型；不給就照 MATCH_MODEL 設定（模型比較工具會指定）。
     synonyms：同義詞表；不給就讀 skill_synonyms.yaml。"""
     synonyms = load_synonyms() if synonyms is None else synonyms
-    reqs = dedupe(unify(drop_soft(job.requirements), synonyms))
+    reqs = normalize_groups(dedupe(unify(drop_soft(job.requirements), synonyms)))
     matched, unmatched = exact_match(reqs, profile, synonyms)
 
     mappings: dict[str, SkillMapping] = {}

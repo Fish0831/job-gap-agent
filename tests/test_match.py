@@ -81,3 +81,22 @@ def test_exact_match_ignores_spelling_differences():
     assert matched["reinforcement-learning"].name == "Reinforcement Learning"
     assert matched["Fast API"].name == "FastAPI"
     assert unmatched == []
+
+
+# 「A 或 B」群組（ADR-10）
+def greq(skill, any_of=None, required=True):
+    return Requirement(skill=skill, original_text=skill, category="other", required=required, any_of=any_of)
+
+
+def test_dedupe_prefers_standalone_over_group():
+    """職缺同時寫「熟悉 Python」和「Python 或 Go」→ Python 是一定要的（單獨那一筆優先）。"""
+    result = dedupe([greq("Python", "g1"), greq("Go", "g1"), greq("python")])
+    assert [(r.skill, r.any_of) for r in result] == [("python", None), ("Go", "g1")]
+
+
+def test_match_cancels_group_left_with_one_member_and_copies_any_of(fake):
+    """C# 和 C#/.NET 被同義詞表併成一個 → 群組只剩 1 個成員 → 取消；正常的群組照樣帶到比對結果。"""
+    synonyms = {key("C#/.NET"): "C#"}
+    job_ = job(greq("C#", "g1"), greq("C#/.NET", "g1"), greq("Python", "g2"), greq("Docker", "g2"))
+    results, _ = match(job_, PROFILE, fake({"mappings": []}), synonyms=synonyms)
+    assert {m.skill: m.any_of for m in results} == {"C#": None, "Python": "g2", "Docker": "g2"}

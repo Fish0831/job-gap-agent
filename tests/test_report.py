@@ -49,3 +49,13 @@ def test_save_markdown_writes_to_reports(tmp_path, monkeypatch):
     path = save_markdown("# hi\n", "jobs/02.txt")
     assert path.parent.name == "reports" and path.name.startswith("02_")
     assert path.read_text(encoding="utf-8") == "# hi\n"
+
+
+def test_any_of_group_in_single_job_report():
+    """會 Python 就滿足「Python 或 C#」→ C# 不列為缺口；表格標出「任一」。"""
+    results = [MatchResult(skill="Python", required=True, status="have", evidence=["p1"], any_of="g1"),
+               MatchResult(skill="C#", required=True, status="missing", any_of="g1"),
+               m("Docker", "missing")]
+    assert [x.skill for x in gaps(results)] == ["Docker"]
+    md = to_markdown(build_report(JOB, results))
+    assert "C#（任一：Python／C#）" in md and "其中 1 組是多選一" in md

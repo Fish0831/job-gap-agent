@@ -1,6 +1,7 @@
 """L0＋L1：拆解的檢查（docs/evaluation.md 第 1.1、2.1、6.4 節）。不花錢，但要用本機私人的 jobs/ 和 cache/。
 
 python -m evals.extract_eval              → 全部職缺：引用的原文存不存在、可疑的必備／加分、「A 或 B」被拆成多個必備
+                                            （「或」的範圍判斷和拆解後的檢查共用 job_agent/anyof.py 的 or_scope）
 python -m evals.extract_eval --align 15   → 和 gold/extract/15.yaml（人工標準答案）比對：precision、recall、必備標記
 
 快取讀的是目前拆解模型的快取（和 samples 匯出用的同一份）；沒有快取的職缺會跳過（先跑一次 python -m job_agent.samples jobs）。
@@ -8,7 +9,6 @@ python -m evals.extract_eval --align 15   → 和 gold/extract/15.yaml（人工�
 
 import argparse
 import re
-import unicodedata
 from pathlib import Path
 from typing import Literal
 
@@ -17,6 +17,7 @@ from pydantic import BaseModel, Field
 
 from evals.metrics import pct
 from evals.samples_eval import OUT_DIR, processed
+from job_agent.anyof import clean_groups, find_line, nfkc, norm, or_scope
 from job_agent.__main__ import job_files
 from job_agent.extract import cache_path, read_job
 from job_agent.llm import model_for
@@ -29,29 +30,12 @@ PREFERRED = re.compile(r"加分|者佳|尤佳|為佳|優先|plus|preferred|nice 
 OVERVIEW = re.compile(r"涵蓋技術|有機會接觸|你將接觸|將有機會|可以學到|技術棧|tech stack", re.IGNORECASE)
 REQUIRED_HDR = re.compile(r"條件要求|必備|必要條件|基本條件|職位條件|應徵條件|requirements|qualifications|must", re.IGNORECASE)
 HEADER = re.compile(r"【.*】|\[.*\]|^[|｜▶■◆●]?\s*\S.{0,24}[:：]?$")
-OR_WORDS = re.compile(r"或|任一|擇一|其中之一|\bor\b|either|any of", re.IGNORECASE)
-
-
-def norm(text: str) -> str:
-    """全形轉半形、小寫、去掉所有空白 → 比較引用的原文時不受排版影響。"""
-    return re.sub(r"\s+", "", unicodedata.normalize("NFKC", text).lower())
 
 
 def grounded(r: Requirement, body: str) -> bool:
     """模型引用的 original_text 是不是真的出現在職缺原文裡。"""
     q = norm(r.original_text)
     return bool(q) and q in norm(body)
-
-
-def find_line(r: Requirement, lines: list[str]) -> int | None:
-    """original_text 出現在第幾行（找不到 → None）。"""
-    q = norm(r.original_text)
-    if not q:
-        return None
-    for i, line in enumerate(lines):
-        if q in norm(line) or (len(norm(line)) > 3 and norm(line) in q):
-            return i
-    return None
 
 
 def section_header(lines: list[str], i: int) -> str:
@@ -82,16 +66,52 @@ def required_lint(job: JobRequirements, body: str) -> list[dict]:
     return out
 
 
+def _locate(r: Requirement, line: str, masked: list[str]) -> int | None:
+    """技能在這一行的位置：先找技能名稱（英文名稱要整個字對上，C 不會被當成 C#），找到就遮掉；
+    找不到（例如中文原文、英文名稱）就用 original_text 的位置。都找不到 → None（不判斷這一項）。"""
+    name = re.escape(nfkc(r.skill).lower())
+    m = re.search(rf"(?<![a-z0-9]){name}(?![a-z0-9+#])", "".join(masked))
+    if m:
+        masked[m.start():m.end()] = " " * (m.end() - m.start())
+        return m.start()
+    q = nfkc(r.original_text).lower().strip()
+    pos = line.find(q) if q else -1
+    return pos if pos >= 0 else None
+
+
 def or_lint(job: JobRequirements, body: str) -> list[dict]:
-    """「A 或 B」被拆成多個必備：同一行有「或／or／任一」，而且這一行拆出 2 個以上必備技能。
-    例：「Python 或 C#/.NET」→ Python、C#/.NET 都是必備 → 會一個的人也被算缺一個。"""
+    """「A 或 B」的檢查（docs/naming-and-any-of.md 第 5 節）。只看必備項目，每一行：
+    1. or_scope 判斷有沒有「或」的線索、範圍到哪裡（「或以上」「或相關科系」不算）
+    2. 範圍裡有 2 個以上必備項目，而且「或」那一段裡至少一個 → 下判定：
+       split = 強線索、項目沒有標成同一組（很可能被拆錯，目標 0）
+       ok    = 強線索、已經是同一組
+       maybe = 只有弱線索（等、例如、such as）：可能是舉例，只列出來（待決定 A3）
+    另外列出 ungrounded：模型標了群組、但那一行沒有強線索（拆解時會自動取消）。"""
     lines = body.splitlines()
-    by_line: dict[int, list[str]] = {}
+    by_line: dict[int, list[Requirement]] = {}
     for r in job.requirements:
         i = find_line(r, lines)
-        if r.required and i is not None and OR_WORDS.search(lines[i]):
-            by_line.setdefault(i, []).append(r.skill)
-    return [{"skills": skills, "line": lines[i].strip()[:80]} for i, skills in sorted(by_line.items()) if len(skills) >= 2]
+        if r.required and i is not None:
+            by_line.setdefault(i, []).append(r)
+    out = []
+    for i, items in sorted(by_line.items()):
+        line = nfkc(lines[i]).lower()
+        scope = or_scope(line)
+        if scope is None or len(items) < 2:
+            continue
+        kind, s0, s1, c0, c1 = scope
+        masked = list(line)
+        located = [(r, _locate(r, line, masked)) for r in sorted(items, key=lambda r: -len(r.skill))]
+        located = sorted(((r, p) for r, p in located if p is not None), key=lambda x: x[1])
+        in_scope = [r for r, p in located if s0 <= p <= s1]
+        if len(in_scope) < 2 or not any(c0 <= p <= c1 for _, p in located):
+            continue
+        groups = {r.any_of for r in in_scope}
+        verdict = "maybe" if kind == "weak" else ("ok" if len(groups) == 1 and None not in groups else "split")
+        out.append({"verdict": verdict, "skills": [r.skill for r in in_scope], "line": lines[i].strip()[:80]})
+    for d in clean_groups(job.requirements, body)[1]:
+        out.append({"verdict": "ungrounded", "skills": d["skills"], "line": d["why"]})
+    return out
 
 
 # ===== L1：對人工標準答案 =====
@@ -181,12 +201,22 @@ def lint_all(files: list[Path], model: str) -> dict:
             "grounding": pct(n - sum(len(j["ungrounded"]) for j in jobs), n)}
 
 
+OR_SECTIONS = [
+    ("split", "「A 或 B」可能被拆成多個必備（目標 0）"),
+    ("ungrounded", "模型標了群組、但沒有根據（拆解時已自動取消）"),
+    ("maybe", "可能是舉例（等／例如／such as；只列出來，待決定 A3）"),
+    ("ok", "「A 或 B」已經標成同一組"),
+]
+
+
 def lint_markdown(r: dict) -> str:
     lines = ["# 拆解檢查（L0）", "", f"- 引用的原文存在：{r['grounding']}（目標 ≥ 0.98）"]
     if r["skipped"]:
         lines.append(f"- 沒有快取、跳過：{'、'.join(r['skipped'])}")
-    lines += ["", "## 「A 或 B」可能被拆成多個必備", ""]
-    lines += [f"- {j['job_id']}：{'、'.join(o['skills'])} ← {o['line']}" for j in r["jobs"] for o in j["or_lint"]] or ["- 沒有"]
+    for verdict, title in OR_SECTIONS:
+        found = [(j["job_id"], o) for j in r["jobs"] for o in j["or_lint"] if o["verdict"] == verdict]
+        lines += ["", f"## {title}（{len(found)}）", ""]
+        lines += [f"- {jid}：{'、'.join(o['skills'])} ← {o['line']}" for jid, o in found] or ["- 沒有"]
     lines += ["", "## 可疑的必備／加分（人工看過才算數）", ""]
     lines += [f"- {j['job_id']}：{x['skill']}（標{x['marked']}；{x['why']}）← {x['line']}"
               for j in r["jobs"] for x in j["required_lint"]] or ["- 沒有"]

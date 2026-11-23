@@ -5,6 +5,7 @@ import json
 import sys
 from pathlib import Path
 
+from job_agent.anyof import clean_groups
 from job_agent.llm import call_structured, model_for
 from job_agent.schemas import JobRequirements
 
@@ -61,6 +62,9 @@ def extract_from_text(text: str, title: str = "", company: str = "", client=None
     # 職稱和公司以使用者給的為準，不用模型猜的
     job.title = title or job.title
     job.company = company or job.company
+    # 「A 或 B」群組的第二道防線：沒有根據的群組取消（回到每個技能各算一個條件）
+    job.requirements, dropped = clean_groups(job.requirements, text)
+    stats["dropped_groups"] = dropped
     return job, stats
 
 

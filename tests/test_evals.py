@@ -96,7 +96,21 @@ def test_or_lint_finds_either_or_split_into_two_required():
     job = JobRequirements(title="x", requirements=[
         req("Python", text="Python 或 C#/.NET"), req("C#/.NET", text="Python 或 C#/.NET"), req("Docker", text="熟悉 Docker")])
     found = ee.or_lint(job, BODY)
-    assert len(found) == 1 and found[0]["skills"] == ["Python", "C#/.NET"]
+    assert len(found) == 1 and found[0]["skills"] == ["Python", "C#/.NET"] and found[0]["verdict"] == "split"
+
+
+def test_or_lint_scope_ok_and_maybe():
+    """「或」在前面只算那一段；標成同一組 → ok；「等」→ maybe；「或以上」不算。"""
+    body = "Go 或 Rust、Docker、Git\n熟悉 Kotlin、Scala 等語言\n3 年或以上經驗，熟悉 Java、Swift"
+    def r(skill, text, group=None):
+        return Requirement(skill=skill, original_text=text, category="other", required=True, any_of=group)
+    line1 = "Go 或 Rust、Docker、Git"
+    job = JobRequirements(title="x", requirements=[
+        r("Go", line1, "g1"), r("Rust", line1, "g1"), r("Docker", line1), r("Git", line1),
+        r("Kotlin", "熟悉 Kotlin、Scala 等語言"), r("Scala", "熟悉 Kotlin、Scala 等語言"),
+        r("Java", "3 年或以上經驗，熟悉 Java、Swift"), r("Swift", "3 年或以上經驗，熟悉 Java、Swift")])
+    found = [(o["verdict"], o["skills"]) for o in ee.or_lint(job, body)]
+    assert found == [("ok", ["Go", "Rust"]), ("maybe", ["Kotlin", "Scala"])]
 
 
 def test_required_lint_flags_overview_and_preferred():

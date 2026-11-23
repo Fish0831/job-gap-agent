@@ -6,6 +6,7 @@ from typing import Literal
 
 import yaml
 from pydantic import BaseModel, Field, model_validator
+from pydantic.json_schema import SkipJsonSchema
 
 Level = Literal["basic", "working", "strong"]
 Status = Literal["have", "partial", "missing"]
@@ -21,6 +22,10 @@ class Requirement(BaseModel):
     original_text: str = Field(description="The exact phrase from the job posting")
     category: Category
     required: bool = Field(description="True if must-have; False if nice-to-have / preferred / 加分")
+    # 「A 或 B」群組標籤（ADR-10）：同一份職缺裡標籤相同的項目是一組，原文只要求其中一個。
+    # 步驟 1（現在）：SkipJsonSchema → 不放進給模型的格式，也不算進快取指紋 → 不重拆、行為不變。
+    # 步驟 2：改成一般欄位＋說明，拆解規則（extract.SYSTEM）教模型標 → 重拆一次。
+    any_of: SkipJsonSchema[str | None] = None
 
 
 class JobRequirements(BaseModel):
@@ -76,6 +81,7 @@ class MatchResult(BaseModel):
     reason: str = ""
     how: Literal["name", "same", "related", "none"] = "none"  # name = 程式名稱對上；其他是 LLM 的判斷
     matched_to: str | None = None  # 對應到 profile 的哪個技能
+    any_of: str | None = None      # 從 Requirement 複製：「A 或 B」群組標籤（見 anyof.py）
 
 
 class GapReport(BaseModel):

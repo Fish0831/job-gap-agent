@@ -35,7 +35,11 @@ def export_samples(files: list[Path], out: str | Path = SAMPLES_FILE, client=Non
     data = []
     for f, role in zip(files, roles):
         job, stats = extract_requirements(f, client=client)
-        data.append({"job_id": f.stem, "role": role, "job": strip_job(job).model_dump()})
+        dumped = strip_job(job).model_dump()
+        for r in dumped["requirements"]:
+            if r.get("any_of") is None:
+                r.pop("any_of", None)  # 沒有群組就不寫 → 和舊格式一樣
+        data.append({"job_id": f.stem, "role": role, "job": dumped})
         cached = "快取" if stats.get("cached") else f"重新拆解 ${stats['cost_usd']:.4f}"
         print(f"{f.name}  [{role}] {job.title} @ {job.company}  技能 {len(job.requirements)} 個（{cached}）")
     counts = "、".join(f"{ROLES[r]} {roles.count(r)}" for r in ROLES)

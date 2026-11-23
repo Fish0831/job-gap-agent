@@ -189,8 +189,8 @@ def show_fit(runs, samples_by_id, roles: dict[str, str]) -> None:
                                                                     format="percent")},
             hide_index=True, width="stretch",
         )
-        st.caption("適合度 = (有 + 0.5 × 部分) ÷ 必備技能數，只看必備技能，年資不算進來。"
-                   "必備缺口 = 必備技能裡「沒有」的數量。")
+        st.caption("適合度 = (有 + 0.5 × 部分) ÷ 必備技能數，只看必備技能，年資不算進來；"
+                   "「A 或 B」多選一算一個條件。必備缺口 = 必備技能裡「沒有」的數量。")
 
 
 def show_report(runs, samples_by_id, role_label: str, roles: dict[str, str]) -> None:
@@ -238,7 +238,7 @@ def show_report(runs, samples_by_id, role_label: str, roles: dict[str, str]) -> 
             } for s in stats if len(s.required_in) + len(s.preferred_in) >= 2],
             column_config={
                 "必備": st.column_config.ProgressColumn("必備（幾份）", min_value=0, max_value=n, format="%d"),
-                "優先度": st.column_config.NumberColumn("優先度", format="%d"),
+                "優先度": st.column_config.NumberColumn("優先度", format="%g"),  # 「A 或 B」會有小數
             },
             hide_index=True, width="stretch",
         )

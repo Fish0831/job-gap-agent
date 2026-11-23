@@ -90,3 +90,41 @@ def test_role_fit_average_and_min_jobs():
     assert role_fit(fits, roles) == [("ml", 0.5, 2), ("ai-app", 0.5, 1)]   # 同分：份數多的在前
     assert role_fit(fits, roles, min_jobs=2) == [("ml", 0.5, 2)]            # 份數太少的不算
     assert role_fit(fits, {}) == []                                          # 沒有類別 → 空的
+
+
+# 「A 或 B」（ADR-10）：一組算一個條件、缺口算在最接近的選項上
+def g(skill, status, group, required=True, evidence=()):
+    return MatchResult(skill=skill, required=required, status=status, evidence=list(evidence), any_of=group)
+
+
+def test_job_fit_counts_a_group_as_one_condition():
+    """必備：Python（有）、C#（沒有）、SQL（有）、Docker（部分），Python 和 C# 同一組。
+    舊算法 (1 + 0 + 1 + 0.5) ÷ 4 = 0.625；新算法 (1 + 1 + 0.5) ÷ 3 = 0.833。"""
+    r = run("01", g("Python", "have", "g1"), g("C#", "missing", "g1"), m("SQL", "have"), m("Docker", "partial"))
+    f = job_fit(r)
+    assert (f.fit, f.n_required, f.missing_required) == (0.833, 3, 0)
+
+
+def test_priority_uses_shares():
+    stats = {s.skill: s for s in aggregate([
+        run("01", g("Python", "have", "g1"), g("C#", "missing", "g1")),      # 滿足 → C# 不算缺口
+        run("02", g("Go", "partial", "g1"), g("Rust", "missing", "g1")),     # 缺口算在 Go 上
+        run("03", g("Java", "missing", "g1"), g("Kotlin", "missing", "g1"), g("Scala", "missing", "g1")),
+    ])}
+    assert priority(stats["C#"]) == 0
+    assert (priority(stats["Go"]), priority(stats["Rust"])) == (2, 0)
+    assert priority(stats["Java"]) == 1.3                                     # 2 × 2 ÷ 3，取一位小數
+    assert stats["C#"].any_of_in == ["01"]
+
+
+def test_no_groups_means_nothing_changes():
+    """沒有群組的資料：份額全部是 1 → 優先度、適合度和舊算法一樣（現有測試不用改就要通過）。"""
+    stats = aggregate(RUNS)
+    assert all(set(s.shares.values()) == {1.0} and not s.any_of_in for s in stats)
+    assert "多選一" not in to_markdown(RUNS, stats, created_at=datetime(2026, 11, 23))
+
+
+def test_markdown_marks_any_of_jobs():
+    runs = [run("01", g("Python", "missing", "g1"), g("C#", "missing", "g1")), run("02", m("Python", "missing"))]
+    md = to_markdown(runs, aggregate(runs), created_at=datetime(2026, 11, 23))
+    assert "| Python | 2／2（多選一 1） |" in md

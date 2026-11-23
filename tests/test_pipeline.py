@@ -103,3 +103,18 @@ def test_app_shows_result_page(tmp_path, monkeypatch, fake):
     assert not any("US$" in m.value for m in at.markdown)       # 畫面上不顯示費用
     assert len(at.dataframe) == 3                               # 樣本職缺＋最適合的職缺＋完整統計
     assert at.metric[0].delta == "全部職務"                      # 舊的結果沒有 role_label → 顯示「全部職務」
+
+
+def test_export_keeps_any_of_only_when_set(tmp_path, monkeypatch, fake):
+    """有群組才寫 any_of；沒有群組的項目和舊格式一樣（samples/jobs.json 不會多出一堆 null）。"""
+    monkeypatch.chdir(tmp_path)
+    f = tmp_path / "03.txt"
+    f.write_text("title: x\nrole: ai-app\n---\n熟悉 Python 或 Go\n熟悉 Docker\n", encoding="utf-8")
+    data = {"title": "x", "requirements": [
+        {"skill": "Python", "original_text": "熟悉 Python 或 Go", "category": "language", "required": True, "any_of": "g1"},
+        {"skill": "Go", "original_text": "熟悉 Python 或 Go", "category": "language", "required": True, "any_of": "g1"},
+        {"skill": "Docker", "original_text": "熟悉 Docker", "category": "infra", "required": True}]}
+    out = export_samples([f], tmp_path / "jobs.json", client=fake(data))
+    reqs = json.loads(out.read_text(encoding="utf-8"))[0]["job"]["requirements"]
+    assert [r.get("any_of") for r in reqs] == ["g1", "g1", None] and "any_of" not in reqs[2]
+    assert load_samples(out)[0][1].requirements[0].any_of == "g1"     # 讀回來還在

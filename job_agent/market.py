@@ -4,7 +4,9 @@
 - aggregate()      依技能彙總：出現在幾份必備、幾份加分、每份我的狀態
 - overall_status() 跨職缺的「我的狀態」：取最常見的；平手取比較差的（保守）
 - priority()       優先度 = 每份職缺各算一次再加總：必備 2／加分 1 × 那一份的缺口權重（沒有 2、部分 1、有 0）
-- job_fit()        每份職缺的適合度 = (有 + 0.5 × 部分) ÷ 必備數 → rank_jobs() 排出最適合的職缺
+                   ×「A 或 B」的份額（anyof.shares；沒有群組時是 1）
+- job_fit()        每份職缺的適合度 = (有 + 0.5 × 部分) ÷ 必備條件數 → rank_jobs() 排出最適合的職缺
+                   「A 或 B」一組算一個條件，狀態取成員裡最好的（anyof.conditions）
 - role_fit()       依職務類別平均適合度 → 使用者最接近哪一類
 - to_markdown()    回傳字串，不直接寫檔 → 之後網頁版可以直接拿來顯示
 """
@@ -14,6 +16,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
+from job_agent.anyof import best, conditions, shares
 from job_agent.normalize import key
 from job_agent.report import ICON, REPORT_DIR, _cell
 from job_agent.schemas import JobRequirements, MatchResult, Status
@@ -40,6 +43,8 @@ class SkillStat:
     statuses: dict[str, Status] = field(default_factory=dict)  # 每份職缺我的狀態
     evidence: set[str] = field(default_factory=set)
     level: str | None = None
+    shares: dict[str, float] = field(default_factory=dict)  # 每份職缺的份額（「A 或 B」；沒有群組 = 1）
+    any_of_in: list[str] = field(default_factory=list)      # 哪幾份是「A 或 B」多選一的成員
 
     @property
     def status(self) -> Status:
@@ -64,12 +69,15 @@ def overall_status(statuses: list[Status]) -> Status:
     return max(WORSE_FIRST, key=lambda s: (counts[s], -WORSE_FIRST.index(s)))
 
 
-def priority(stat: SkillStat) -> int:
-    """數字越大越該先補。每份職缺各算一次再加總（必備 2、加分 1，× 那一份我的缺口權重）。
+def priority(stat: SkillStat) -> int | float:
+    """數字越大越該先補。每份職缺各算一次再加總（必備 2、加分 1，× 那一份我的缺口權重 × 份額）。
     舊寫法是「需求分數 × 取多數後的狀態權重」：剛好平手時一次判斷翻轉，整個優先度就加倍或減半。
-    新寫法：所有職缺判斷一致時結果和舊的一樣；不一致時，一次翻轉只影響那一份（必備差 2、加分差 1）。"""
-    return (sum(2 * GAP_WEIGHT[stat.statuses[j]] for j in stat.required_in)
-            + sum(GAP_WEIGHT[stat.statuses[j]] for j in stat.preferred_in))
+    新寫法：所有職缺判斷一致時結果和舊的一樣；不一致時，一次翻轉只影響那一份（必備差 2、加分差 1）。
+    份額（11/23，ADR-10）：「A 或 B」裡缺口算在最接近的選項上，條件已滿足的是 0 → 可能有小數（取一位）。"""
+    def part(j: str, weight: int) -> float:
+        return weight * GAP_WEIGHT[stat.statuses[j]] * stat.shares.get(j, 1.0)
+    value = sum(part(j, 2) for j in stat.required_in) + sum(part(j, 1) for j in stat.preferred_in)
+    return int(value) if value == int(value) else round(value, 1)
 
 
 def aggregate(runs: list[Run]) -> list[SkillStat]:
@@ -77,12 +85,16 @@ def aggregate(runs: list[Run]) -> list[SkillStat]:
     stats: dict[str, SkillStat] = {}
     names: dict[str, Counter] = {}
     for run in runs:
+        share = shares(run.results)
         for m in run.results:
             k = key(m.skill)
             stat = stats.setdefault(k, SkillStat(skill=m.skill))
             names.setdefault(k, Counter())[m.skill] += 1
             (stat.required_in if m.required else stat.preferred_in).append(run.job_id)
             stat.statuses[run.job_id] = m.status
+            stat.shares[run.job_id] = share.get(k, 1.0)
+            if m.any_of:
+                stat.any_of_in.append(run.job_id)
             stat.evidence.update(m.evidence)
             stat.level = stat.level or m.level
     for k, stat in stats.items():
@@ -105,16 +117,18 @@ def strengths(stats: list[SkillStat], n: int = TOP_N) -> list[SkillStat]:
 @dataclass
 class JobFit:
     job_id: str
-    fit: float              # 0–1：(有 + 0.5 × 部分) ÷ 必備數
-    n_required: int
-    missing_required: int   # 必備技能裡「沒有」的數量
+    fit: float              # 0–1：(有 + 0.5 × 部分) ÷ 必備條件數
+    n_required: int         # 必備條件數（「A 或 B」一組算一個）
+    missing_required: int   # 必備條件裡「沒有」的數量
 
 
 def job_fit(run: Run) -> JobFit:
-    """一份職缺有多適合我：只看必備技能（沒有必備技能的職缺才看全部）。年資不算進來。"""
+    """一份職缺有多適合我：只看必備技能（沒有必備技能的職缺才看全部）。年資不算進來。
+    「A 或 B」一組算一個條件，狀態取成員裡最好的：會 Python 就滿足「Python 或 C#」。"""
     req = [r for r in run.results if r.required] or run.results
-    fit = sum(FIT_WEIGHT[r.status] for r in req) / len(req) if req else 0.0
-    return JobFit(run.job_id, round(fit, 3), len(req), sum(r.status == "missing" for r in req))
+    conds = [best([m.status for m in c]) for c in conditions(req)]
+    fit = sum(FIT_WEIGHT[s] for s in conds) / len(conds) if conds else 0.0
+    return JobFit(run.job_id, round(fit, 3), len(conds), sum(s == "missing" for s in conds))
 
 
 def rank_jobs(runs: list[Run]) -> list[JobFit]:
@@ -146,6 +160,12 @@ def _jobs(ids: list[str]) -> str:
     return "、".join(ids) or "—"
 
 
+def _required_cell(stat: SkillStat, n: int) -> str:
+    """必備幾份；其中有「A 或 B」多選一的另外標出來（需求分數不打折，見 ADR-10 待決定 A2）。"""
+    k = len(set(stat.any_of_in) & set(stat.required_in))
+    return f"{len(stat.required_in)}／{n}" + (f"（多選一 {k}）" if k else "")
+
+
 def to_markdown(runs: list[Run], stats: list[SkillStat], cost_usd: float | None = None,
                 created_at: datetime | None = None, role_label: str | None = None) -> str:
     n = len(runs)
@@ -166,7 +186,7 @@ def to_markdown(runs: list[Run], stats: list[SkillStat], cost_usd: float | None 
     gaps = top_gaps(stats)
     for i, s in enumerate(gaps, 1):
         lines.append(
-            f"| {i} | {_cell(s.skill)} | {len(s.required_in)}／{n} | {len(s.preferred_in)} "
+            f"| {i} | {_cell(s.skill)} | {_required_cell(s, n)} | {len(s.preferred_in)} "
             f"| {_status_cell(s)} | {priority(s)} | {_jobs(s.required_in + s.preferred_in)} |"
         )
     if not gaps:

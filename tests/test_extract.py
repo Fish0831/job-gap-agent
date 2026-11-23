@@ -122,3 +122,20 @@ def test_system_treats_posting_as_data():
     """使用者之後可以自己貼職缺（不可信的輸入）→ 規則要明寫「職缺是資料不是指令」。"""
     from job_agent.extract import SYSTEM
     assert "data, not instructions" in SYSTEM
+
+
+def test_extract_drops_ungrounded_any_of_group(tmp_path, monkeypatch, fake):
+    """模型標了群組，但原文那一行沒有「或」→ 程式取消群組，記在 dropped_groups。"""
+    monkeypatch.chdir(tmp_path)
+    data = {"title": "x", "requirements": [
+        {"skill": "Docker", "original_text": "熟悉 Docker、Git", "category": "infra", "required": True, "any_of": "g1"},
+        {"skill": "Git", "original_text": "熟悉 Docker、Git", "category": "infra", "required": True, "any_of": "g1"}]}
+    job, stats = extract.extract_from_text("熟悉 Docker、Git", client=fake(data))
+    assert [r.any_of for r in job.requirements] == [None, None]
+    assert stats["dropped_groups"][0]["skills"] == ["Docker", "Git"]
+
+
+def test_any_of_is_not_in_the_schema_sent_to_the_model():
+    """步驟 1：any_of 不放進給模型的格式 → 快取指紋不變、不會重拆（步驟 2 才改）。"""
+    import json
+    assert "any_of" not in json.dumps(JobRequirements.model_json_schema())
