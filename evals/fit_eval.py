@@ -103,6 +103,8 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--gold", default=str(GOLD_FIT))
     args = parser.parse_args(argv)
     all_runs, _ = load_runs(args.folder)
+    if not all_runs or not all(all_runs):
+        raise SystemExit(f"{args.folder} 裡沒有成功的重跑結果（S1 可能整批失敗），換一個資料夾。")
     md = to_markdown(evaluate(all_runs, load_gold(args.gold)))
     print(md)
     (Path(args.folder) / "fit.md").write_text(md, encoding="utf-8")

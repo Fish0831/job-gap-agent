@@ -51,6 +51,8 @@ def test_not_an_either_or(line):
 def test_examples_are_weak():
     assert or_scope("熟悉 Go、Rust 等語言")[0] == "weak"
     assert or_scope("tools such as Go and Rust")[0] == "weak"
+    assert or_scope("tools such as Go, Rust, or Java")[0] == "weak"     # 舉例清單最後的 or 也不算
+    assert or_scope("例如 Go 或 Rust 任一")[0] == "strong"               # 有「任一」量詞 → 還是多選一
     assert or_scope("熟悉 Go 與 Rust") is None
 
 

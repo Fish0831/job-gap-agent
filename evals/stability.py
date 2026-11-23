@@ -75,7 +75,7 @@ def match_stability(all_runs: list[list[Run]], roles: dict[str, str], priority_f
         return kendall_tau([a.get(k, 0) for k in keys], [b.get(k, 0) for k in keys])
 
     union10 = {k for t in tops for k in t[:10]}
-    jumps = {k: max(p.get(k, 0) for p in pr) - min(p.get(k, 0) for p in pr) for k in union10}
+    jumps = {k: round(max(p.get(k, 0) for p in pr) - min(p.get(k, 0) for p in pr), 1) for k in union10}
     worst = max(jumps.items(), key=lambda kv: kv[1]) if jumps else ("—", 0)
 
     fits = [rank_jobs(runs) for runs in all_runs]
@@ -97,6 +97,7 @@ def match_stability(all_runs: list[list[Run]], roles: dict[str, str], priority_f
         "rank_tau": round(mean(pairwise(pr, tau)), 3) if len(pr) > 1 else 1.0,
         "priority_max_jump": f"{worst[1]}（{worst[0]}）",
         "fit_sd_max": round(max((statistics.pstdev(v) for v in by_job.values()), default=0.0), 3),
+        "fit_sd_job": max(by_job, key=lambda j: statistics.pstdev(by_job[j])) if by_job else "—",  # 跳最多的職缺
         "top5_overlap_runs": round(mean(pairwise([[f.job_id for f in fs] for fs in fits],
                                                  lambda a, b: overlap_at_k(a, b, 5))), 2) if len(fits) > 1 else 5.0,
         "role_fit_agreement": f"{top_count}/{len(best_roles)}（{top_role}）",
@@ -140,6 +141,8 @@ def run_s1(profile: Profile, samples, n: int, budget: float, client=None, out_ro
     all_runs, total, failed = [], 0.0, []
     for i in range(n):
         runs, cost, fail = analyze(profile, samples, client=client)
+        if samples and not runs:  # 一份都沒成功（例如 API key 錯誤）→ 停下來，不存、不記紀錄
+            raise SystemExit(f"第 {i + 1} 次重跑：{len(samples)} 份全部失敗，停止。先確認 API key 和網路（11/23 遇過 401）。")
         all_runs.append(runs)
         total += cost
         failed += fail
@@ -191,7 +194,9 @@ def main(argv: list[str] | None = None) -> None:
     md = to_markdown(results, meta)
     print(md)
     (folder / "summary.md").write_text(md, encoding="utf-8")
-    if args.cmd == "match":
+    if args.cmd == "match" and meta["failed"]:
+        print(f"⚠ 有 {len(meta['failed'])} 份比對失敗，這次不記進 evals/history.jsonl（數字不能和其他次比較）")
+    elif args.cmd == "match":
         now = results["現在（逐份加總）"]
         append_history({**meta, **{k: v for k, v in now.items() if k != "flipped"}})
     print(f"已存到 {folder}")

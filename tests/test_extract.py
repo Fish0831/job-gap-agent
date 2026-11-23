@@ -135,7 +135,8 @@ def test_extract_drops_ungrounded_any_of_group(tmp_path, monkeypatch, fake):
     assert stats["dropped_groups"][0]["skills"] == ["Docker", "Git"]
 
 
-def test_any_of_is_not_in_the_schema_sent_to_the_model():
-    """步驟 1：any_of 不放進給模型的格式 → 快取指紋不變、不會重拆（步驟 2 才改）。"""
+def test_any_of_is_in_the_schema_and_rules():
+    """步驟 2（11/23）：any_of 放進給模型的格式，拆解規則也教模型怎麼標 → 指紋改變、全部重拆一次。"""
     import json
-    assert "any_of" not in json.dumps(JobRequirements.model_json_schema())
+    assert "any_of" in json.dumps(JobRequirements.model_json_schema())
+    assert "`any_of`" in extract.SYSTEM and "經驗或研究背景" in extract.SYSTEM

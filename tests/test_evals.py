@@ -189,6 +189,24 @@ def test_s1_budget_guard_stops_before_calling(tmp_path, monkeypatch, fake):
     assert client.calls == 0                                            # 先檢查再花錢
 
 
+def test_s1_stops_when_a_whole_run_fails(tmp_path, monkeypatch):
+    """API key 錯誤這類全部失敗的情況：第一次重跑就停，不存結果（11/23 遇過 401 還照樣存檔）。"""
+    from job_agent.llm import LLMError
+
+    class BadKey:
+        calls = 0
+        messages = property(lambda self: self)
+        def create(self, **kwargs):
+            BadKey.calls += 1
+            raise LLMError("invalid x-api-key")   # 和真的 401 一樣：analyze 把它記成失敗
+
+    monkeypatch.chdir(tmp_path)
+    write_samples(tmp_path, [("01", "ai-app", [req("LangGraph")])])
+    with pytest.raises(SystemExit):
+        stability.run_s1(PROFILE, stability.load_samples(), n=5, budget=1.0, client=BadKey(), out_root=tmp_path / "eval")
+    assert BadKey.calls == 1 and not (tmp_path / "eval").exists()      # 只試了 1 份就停、沒有存檔
+
+
 def test_rescore_new_rule_jumps_less_than_old():
     job = JobRequirements(title="x", requirements=[])
     def runs(s2):  # CI/CD 在兩份職缺都是必備；第二份的判斷在兩次重跑之間翻轉（部分 ↔ 沒有）

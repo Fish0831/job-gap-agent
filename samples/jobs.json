@@ -8,13 +8,13 @@
       "min_years": null,
       "requirements": [
         {
-          "skill": "Software Development",
+          "skill": "Requirement Analysis",
           "original_text": "",
-          "category": "language",
+          "category": "other",
           "required": true
         },
         {
-          "skill": "Requirement Analysis",
+          "skill": "Product Scoping",
           "original_text": "",
           "category": "other",
           "required": true
@@ -26,7 +26,13 @@
           "required": true
         },
         {
-          "skill": "Scope Definition",
+          "skill": "System Design",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "Software Development",
           "original_text": "",
           "category": "other",
           "required": true
@@ -34,11 +40,11 @@
         {
           "skill": "AI Coding Tools",
           "original_text": "",
-          "category": "llm",
+          "category": "other",
           "required": true
         },
         {
-          "skill": "API Design",
+          "skill": "API",
           "original_text": "",
           "category": "infra",
           "required": true
@@ -50,19 +56,19 @@
           "required": true
         },
         {
-          "skill": "Full-Stack Development",
+          "skill": "Frontend Development",
+          "original_text": "",
+          "category": "framework",
+          "required": true
+        },
+        {
+          "skill": "Backend Development",
           "original_text": "",
           "category": "framework",
           "required": true
         },
         {
           "skill": "System Architecture",
-          "original_text": "",
-          "category": "infra",
-          "required": true
-        },
-        {
-          "skill": "System Design",
           "original_text": "",
           "category": "infra",
           "required": true
@@ -82,7 +88,7 @@
         {
           "skill": "Version Control",
           "original_text": "",
-          "category": "other",
+          "category": "infra",
           "required": true
         },
         {
@@ -122,12 +128,6 @@
           "required": true
         },
         {
-          "skill": "AI Coding Assistant",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
           "skill": "AI Agent",
           "original_text": "",
           "category": "llm",
@@ -140,7 +140,7 @@
           "required": true
         },
         {
-          "skill": "Open-Source LLM Deployment",
+          "skill": "Open-Source LLM",
           "original_text": "",
           "category": "llm",
           "required": true
@@ -161,6 +161,12 @@
           "skill": "MCP",
           "original_text": "",
           "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "AI Coding Tools",
+          "original_text": "",
+          "category": "other",
           "required": true
         },
         {
@@ -208,7 +214,7 @@
         {
           "skill": "Git",
           "original_text": "",
-          "category": "other",
+          "category": "infra",
           "required": true
         },
         {
@@ -230,13 +236,21 @@
           "required": true
         },
         {
+          "skill": "OpenSpec",
+          "original_text": "",
+          "category": "other",
+          "required": true,
+          "any_of": "g1"
+        },
+        {
           "skill": "Spec-Driven Development",
           "original_text": "",
           "category": "other",
-          "required": true
+          "required": true,
+          "any_of": "g1"
         },
         {
-          "skill": "Development Environment Integration",
+          "skill": "AI Tool Integration",
           "original_text": "",
           "category": "other",
           "required": true
@@ -248,13 +262,25 @@
           "required": true
         },
         {
+          "skill": "Web Development",
+          "original_text": "",
+          "category": "framework",
+          "required": true
+        },
+        {
+          "skill": "Mobile App Development",
+          "original_text": "",
+          "category": "framework",
+          "required": true
+        },
+        {
           "skill": "API Development",
           "original_text": "",
           "category": "framework",
           "required": true
         },
         {
-          "skill": "System Architecture Design",
+          "skill": "System Architecture",
           "original_text": "",
           "category": "other",
           "required": false
@@ -269,13 +295,22 @@
           "skill": "Test Automation",
           "original_text": "",
           "category": "other",
-          "required": false
+          "required": false,
+          "any_of": "g3"
         },
         {
-          "skill": "Technical Mentoring",
+          "skill": "Quality Management",
           "original_text": "",
           "category": "other",
-          "required": false
+          "required": false,
+          "any_of": "g3"
+        },
+        {
+          "skill": "Performance Optimization",
+          "original_text": "",
+          "category": "other",
+          "required": false,
+          "any_of": "g3"
         }
       ],
       "responsibilities": []
@@ -308,19 +343,7 @@
           "required": true
         },
         {
-          "skill": "TensorFlow",
-          "original_text": "",
-          "category": "framework",
-          "required": true
-        },
-        {
-          "skill": "PyTorch",
-          "original_text": "",
-          "category": "framework",
-          "required": true
-        },
-        {
-          "skill": "scikit-learn",
+          "skill": "Machine Learning Frameworks",
           "original_text": "",
           "category": "framework",
           "required": true
@@ -340,23 +363,17 @@
         {
           "skill": "Data Mining",
           "original_text": "",
-          "category": "data",
+          "category": "ml",
           "required": true
         },
         {
           "skill": "Model Deployment",
           "original_text": "",
-          "category": "ml",
+          "category": "infra",
           "required": true
         },
         {
           "skill": "SQL",
-          "original_text": "",
-          "category": "data",
-          "required": true
-        },
-        {
-          "skill": "Large-Scale Database Data Analysis",
           "original_text": "",
           "category": "data",
           "required": true
@@ -377,18 +394,27 @@
           "skill": "Python",
           "original_text": "",
           "category": "language",
-          "required": true
+          "required": true,
+          "any_of": "g1"
         },
         {
           "skill": "SAS",
           "original_text": "",
           "category": "language",
-          "required": true
+          "required": true,
+          "any_of": "g1"
         },
         {
           "skill": "MATLAB",
           "original_text": "",
           "category": "language",
+          "required": true,
+          "any_of": "g1"
+        },
+        {
+          "skill": "Machine Learning",
+          "original_text": "",
+          "category": "ml",
           "required": true
         },
         {
@@ -398,7 +424,13 @@
           "required": true
         },
         {
-          "skill": "Model Evaluation",
+          "skill": "Error Analysis",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Model Lifecycle Management",
           "original_text": "",
           "category": "ml",
           "required": true
@@ -424,17 +456,11 @@
         {
           "skill": "MLOps",
           "original_text": "",
-          "category": "ml",
-          "required": false
-        },
-        {
-          "skill": "DevOps",
-          "original_text": "",
           "category": "infra",
           "required": false
         },
         {
-          "skill": "CI/CD",
+          "skill": "DevOps",
           "original_text": "",
           "category": "infra",
           "required": false
@@ -446,13 +472,19 @@
           "required": false
         },
         {
+          "skill": "CI/CD",
+          "original_text": "",
+          "category": "infra",
+          "required": false
+        },
+        {
           "skill": "Java",
           "original_text": "",
           "category": "language",
           "required": false
         },
         {
-          "skill": "Web Services API",
+          "skill": "Web Services",
           "original_text": "",
           "category": "other",
           "required": false
@@ -460,7 +492,7 @@
         {
           "skill": "SQL",
           "original_text": "",
-          "category": "language",
+          "category": "data",
           "required": false
         }
       ],
@@ -506,7 +538,7 @@
           "required": true
         },
         {
-          "skill": "Google Cloud Platform",
+          "skill": "GCP",
           "original_text": "",
           "category": "infra",
           "required": true
@@ -530,7 +562,7 @@
           "required": true
         },
         {
-          "skill": "Apache Spark",
+          "skill": "Spark",
           "original_text": "",
           "category": "data",
           "required": true
@@ -542,19 +574,13 @@
           "required": true
         },
         {
-          "skill": "API Design",
+          "skill": "Productionizing ML Models",
           "original_text": "",
-          "category": "infra",
+          "category": "ml",
           "required": true
         },
         {
-          "skill": "Distributed Systems",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
-          "skill": "Model Evaluation",
+          "skill": "Model Versioning",
           "original_text": "",
           "category": "ml",
           "required": true
@@ -572,7 +598,13 @@
           "required": true
         },
         {
-          "skill": "VLM",
+          "skill": "Vision-Language Model",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Multimodal Generative AI",
           "original_text": "",
           "category": "llm",
           "required": true
@@ -590,15 +622,9 @@
           "required": false
         },
         {
-          "skill": "Image and Video Generation",
+          "skill": "Online Experiments",
           "original_text": "",
-          "category": "ml",
-          "required": false
-        },
-        {
-          "skill": "A/B Testing",
-          "original_text": "",
-          "category": "ml",
+          "category": "other",
           "required": false
         }
       ],
@@ -644,28 +670,25 @@
           "required": true
         },
         {
-          "skill": "Software Engineering",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
           "skill": "PyTorch",
           "original_text": "",
           "category": "framework",
-          "required": true
+          "required": true,
+          "any_of": "g1"
         },
         {
           "skill": "TensorFlow",
           "original_text": "",
           "category": "framework",
-          "required": true
+          "required": true,
+          "any_of": "g1"
         },
         {
           "skill": "Scikit-Learn",
           "original_text": "",
           "category": "framework",
-          "required": true
+          "required": true,
+          "any_of": "g1"
         },
         {
           "skill": "Git",
@@ -674,13 +697,13 @@
           "required": true
         },
         {
-          "skill": "Large-Scale Data Analysis",
+          "skill": "Large-scale Data Analysis",
           "original_text": "",
           "category": "data",
           "required": true
         },
         {
-          "skill": "LLM Application Development",
+          "skill": "LLM",
           "original_text": "",
           "category": "llm",
           "required": true
@@ -692,28 +715,10 @@
           "required": true
         },
         {
-          "skill": "ML Model Deployment",
+          "skill": "API Development",
           "original_text": "",
-          "category": "ml",
+          "category": "other",
           "required": true
-        },
-        {
-          "skill": "Anomaly Detection",
-          "original_text": "",
-          "category": "ml",
-          "required": true
-        },
-        {
-          "skill": "English",
-          "original_text": "",
-          "category": "language",
-          "required": true
-        },
-        {
-          "skill": "AI Agent Frameworks",
-          "original_text": "",
-          "category": "llm",
-          "required": false
         },
         {
           "skill": "Prompt Engineering",
@@ -722,15 +727,21 @@
           "required": false
         },
         {
-          "skill": "RAG",
+          "skill": "Vector Database",
           "original_text": "",
           "category": "llm",
           "required": false
         },
         {
-          "skill": "ML Model Monitoring",
+          "skill": "Model Deployment",
           "original_text": "",
-          "category": "ml",
+          "category": "infra",
+          "required": false
+        },
+        {
+          "skill": "Model Monitoring",
+          "original_text": "",
+          "category": "infra",
           "required": false
         },
         {
@@ -740,21 +751,9 @@
           "required": false
         },
         {
-          "skill": "API Development",
-          "original_text": "",
-          "category": "other",
-          "required": false
-        },
-        {
-          "skill": "Semiconductor Manufacturing",
-          "original_text": "",
-          "category": "other",
-          "required": false
-        },
-        {
           "skill": "Automatic Test Equipment",
           "original_text": "",
-          "category": "other",
+          "category": "infra",
           "required": false
         },
         {
@@ -809,31 +808,43 @@
           "skill": "Java",
           "original_text": "",
           "category": "language",
-          "required": true
+          "required": true,
+          "any_of": "g1"
         },
         {
-          "skill": "C/C++",
+          "skill": "C",
           "original_text": "",
           "category": "language",
-          "required": true
+          "required": true,
+          "any_of": "g1"
+        },
+        {
+          "skill": "C++",
+          "original_text": "",
+          "category": "language",
+          "required": true,
+          "any_of": "g1"
         },
         {
           "skill": "OpenVINO",
           "original_text": "",
           "category": "infra",
-          "required": true
+          "required": true,
+          "any_of": "g2"
         },
         {
           "skill": "TensorRT",
           "original_text": "",
           "category": "infra",
-          "required": true
+          "required": true,
+          "any_of": "g2"
         },
         {
           "skill": "ONNX Runtime",
           "original_text": "",
           "category": "infra",
-          "required": true
+          "required": true,
+          "any_of": "g2"
         },
         {
           "skill": "Git",
@@ -845,12 +856,6 @@
           "skill": "Linux",
           "original_text": "",
           "category": "infra",
-          "required": false
-        },
-        {
-          "skill": "Top-tier AI Conference Publication",
-          "original_text": "",
-          "category": "other",
           "required": false
         },
         {
@@ -874,7 +879,7 @@
         {
           "skill": "AI Agent",
           "original_text": "",
-          "category": "llm",
+          "category": "ml",
           "required": true
         },
         {
@@ -908,15 +913,9 @@
           "required": true
         },
         {
-          "skill": "AI-Powered Application Development",
+          "skill": "AI Coding Assistant",
           "original_text": "",
           "category": "llm",
-          "required": true
-        },
-        {
-          "skill": "Software Development Workflow",
-          "original_text": "",
-          "category": "other",
           "required": true
         },
         {
@@ -938,19 +937,19 @@
           "required": true
         },
         {
-          "skill": "Testing",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
           "skill": "Debugging",
           "original_text": "",
           "category": "other",
           "required": true
         },
         {
-          "skill": "Tcl",
+          "skill": "Technical Documentation",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Python",
           "original_text": "",
           "category": "language",
           "required": false
@@ -962,7 +961,7 @@
           "required": false
         },
         {
-          "skill": "Python",
+          "skill": "Tcl",
           "original_text": "",
           "category": "language",
           "required": false
@@ -983,30 +982,32 @@
           "skill": "Python",
           "original_text": "",
           "category": "language",
-          "required": true
+          "required": true,
+          "any_of": "g1"
         },
         {
           "skill": "C#",
           "original_text": "",
           "category": "language",
-          "required": true
-        },
-        {
-          "skill": "Backend Development",
-          "original_text": "",
-          "category": "other",
-          "required": true
+          "required": true,
+          "any_of": "g1"
         },
         {
           "skill": "RESTful API",
           "original_text": "",
-          "category": "infra",
+          "category": "other",
           "required": true
         },
         {
           "skill": "SQL",
           "original_text": "",
           "category": "data",
+          "required": true
+        },
+        {
+          "skill": "Backend Development",
+          "original_text": "",
+          "category": "other",
           "required": true
         },
         {
@@ -1036,7 +1037,7 @@
         {
           "skill": "Embedding",
           "original_text": "",
-          "category": "ml",
+          "category": "llm",
           "required": true
         },
         {
@@ -1054,13 +1055,13 @@
         {
           "skill": "n8n",
           "original_text": "",
-          "category": "framework",
+          "category": "other",
           "required": true
         },
         {
           "skill": "Webhook",
           "original_text": "",
-          "category": "infra",
+          "category": "other",
           "required": true
         },
         {
@@ -1076,10 +1077,16 @@
           "required": true
         },
         {
-          "skill": "MCP",
+          "skill": "Technical Writing",
           "original_text": "",
-          "category": "llm",
-          "required": false
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "On-premise Deployment",
+          "original_text": "",
+          "category": "infra",
+          "required": true
         },
         {
           "skill": "Open-Source LLM Evaluation",
@@ -1088,7 +1095,34 @@
           "required": true
         },
         {
-          "skill": "LLM Application Platform",
+          "skill": "Make",
+          "original_text": "",
+          "category": "other",
+          "required": false,
+          "any_of": "g2"
+        },
+        {
+          "skill": "Zapier",
+          "original_text": "",
+          "category": "other",
+          "required": false,
+          "any_of": "g2"
+        },
+        {
+          "skill": "Power Automate",
+          "original_text": "",
+          "category": "other",
+          "required": false,
+          "any_of": "g2"
+        },
+        {
+          "skill": "MCP",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
+          "skill": "AnythingLLM",
           "original_text": "",
           "category": "llm",
           "required": false
@@ -1100,13 +1134,31 @@
           "required": false
         },
         {
-          "skill": "LLM Application Framework",
+          "skill": "Dify",
           "original_text": "",
           "category": "llm",
           "required": false
         },
         {
-          "skill": "Workflow Automation",
+          "skill": "Open WebUI",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
+          "skill": "Flowise",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
+          "skill": "LangChain",
+          "original_text": "",
+          "category": "framework",
+          "required": false
+        },
+        {
+          "skill": "LlamaIndex",
           "original_text": "",
           "category": "framework",
           "required": false
@@ -1114,11 +1166,23 @@
         {
           "skill": "OCR",
           "original_text": "",
+          "category": "data",
+          "required": false
+        },
+        {
+          "skill": "PDF Parsing",
+          "original_text": "",
+          "category": "data",
+          "required": false
+        },
+        {
+          "skill": "LoRA",
+          "original_text": "",
           "category": "ml",
           "required": false
         },
         {
-          "skill": "LoRA Fine-tuning",
+          "skill": "GGUF",
           "original_text": "",
           "category": "ml",
           "required": false
@@ -1126,13 +1190,13 @@
         {
           "skill": "llama.cpp",
           "original_text": "",
-          "category": "llm",
+          "category": "ml",
           "required": false
         },
         {
           "skill": "vLLM",
           "original_text": "",
-          "category": "infra",
+          "category": "ml",
           "required": false
         },
         {
@@ -1140,18 +1204,6 @@
           "original_text": "",
           "category": "ml",
           "required": false
-        },
-        {
-          "skill": "Requirement Analysis",
-          "original_text": "",
-          "category": "soft",
-          "required": true
-        },
-        {
-          "skill": "Technical Writing",
-          "original_text": "",
-          "category": "soft",
-          "required": true
         }
       ],
       "responsibilities": []
@@ -1166,37 +1218,19 @@
       "min_years": null,
       "requirements": [
         {
-          "skill": "Machine Learning",
-          "original_text": "",
-          "category": "ml",
-          "required": true
-        },
-        {
-          "skill": "Mathematics",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
-          "skill": "Probability and Statistics",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
-          "skill": "Algorithms",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
           "skill": "Python",
           "original_text": "",
           "category": "language",
           "required": true
         },
         {
-          "skill": "C/C++",
+          "skill": "C",
+          "original_text": "",
+          "category": "language",
+          "required": false
+        },
+        {
+          "skill": "C++",
           "original_text": "",
           "category": "language",
           "required": false
@@ -1223,6 +1257,48 @@
           "skill": "scikit-learn",
           "original_text": "",
           "category": "framework",
+          "required": true
+        },
+        {
+          "skill": "Mathematics",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Probability",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Statistics",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Algorithms",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Noise Reduction",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Speech Separation",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Speech Recognition",
+          "original_text": "",
+          "category": "ml",
           "required": true
         }
       ],
@@ -1268,102 +1344,6 @@
           "required": true
         },
         {
-          "skill": "Backend Development",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
-          "skill": "FastAPI",
-          "original_text": "",
-          "category": "framework",
-          "required": false
-        },
-        {
-          "skill": "Django",
-          "original_text": "",
-          "category": "framework",
-          "required": false
-        },
-        {
-          "skill": "Flask",
-          "original_text": "",
-          "category": "framework",
-          "required": false
-        },
-        {
-          "skill": "Node.js",
-          "original_text": "",
-          "category": "framework",
-          "required": false
-        },
-        {
-          "skill": "Data Cleaning",
-          "original_text": "",
-          "category": "data",
-          "required": true
-        },
-        {
-          "skill": "Feature Engineering",
-          "original_text": "",
-          "category": "ml",
-          "required": true
-        },
-        {
-          "skill": "Model Training",
-          "original_text": "",
-          "category": "ml",
-          "required": true
-        },
-        {
-          "skill": "Database",
-          "original_text": "",
-          "category": "data",
-          "required": true
-        },
-        {
-          "skill": "PostgreSQL",
-          "original_text": "",
-          "category": "data",
-          "required": true
-        },
-        {
-          "skill": "MySQL",
-          "original_text": "",
-          "category": "data",
-          "required": true
-        },
-        {
-          "skill": "MongoDB",
-          "original_text": "",
-          "category": "data",
-          "required": true
-        },
-        {
-          "skill": "Vector Database",
-          "original_text": "",
-          "category": "data",
-          "required": true
-        },
-        {
-          "skill": "Docker",
-          "original_text": "",
-          "category": "infra",
-          "required": true
-        },
-        {
-          "skill": "Kubernetes",
-          "original_text": "",
-          "category": "infra",
-          "required": true
-        },
-        {
-          "skill": "MLOps",
-          "original_text": "",
-          "category": "infra",
-          "required": true
-        },
-        {
           "skill": "NLP",
           "original_text": "",
           "category": "ml",
@@ -1382,40 +1362,104 @@
           "required": true
         },
         {
-          "skill": "RESTful API",
+          "skill": "Backend Development",
           "original_text": "",
           "category": "other",
           "required": true
         },
         {
-          "skill": "gRPC",
+          "skill": "API Development",
           "original_text": "",
           "category": "other",
           "required": true
         },
         {
-          "skill": "GraphQL",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
-          "skill": "SQL",
+          "skill": "Data Preprocessing",
           "original_text": "",
           "category": "data",
           "required": true
         },
         {
-          "skill": "NoSQL",
+          "skill": "Feature Engineering",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Model Training",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Docker",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "Kubernetes",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "MLOps",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Database Schema Design",
           "original_text": "",
           "category": "data",
           "required": true
         },
         {
-          "skill": "Technical Documentation",
+          "skill": "PostgreSQL",
+          "original_text": "",
+          "category": "data",
+          "required": true,
+          "any_of": "g1"
+        },
+        {
+          "skill": "MySQL",
+          "original_text": "",
+          "category": "data",
+          "required": true,
+          "any_of": "g1"
+        },
+        {
+          "skill": "MongoDB",
+          "original_text": "",
+          "category": "data",
+          "required": true,
+          "any_of": "g1"
+        },
+        {
+          "skill": "Vector Database",
+          "original_text": "",
+          "category": "data",
+          "required": true,
+          "any_of": "g1"
+        },
+        {
+          "skill": "Technical Writing",
           "original_text": "",
           "category": "other",
           "required": true
+        },
+        {
+          "skill": "Python Web Framework",
+          "original_text": "",
+          "category": "framework",
+          "required": false
+        },
+        {
+          "skill": "Node.js",
+          "original_text": "",
+          "category": "framework",
+          "required": false
         },
         {
           "skill": "LLM API Integration",
@@ -1430,13 +1474,7 @@
           "required": false
         },
         {
-          "skill": "Vue",
-          "original_text": "",
-          "category": "framework",
-          "required": false
-        },
-        {
-          "skill": "React",
+          "skill": "Frontend Framework",
           "original_text": "",
           "category": "framework",
           "required": false
@@ -1449,12 +1487,6 @@
         },
         {
           "skill": "Data Annotation",
-          "original_text": "",
-          "category": "data",
-          "required": false
-        },
-        {
-          "skill": "Data Collection",
           "original_text": "",
           "category": "data",
           "required": false
@@ -1471,24 +1503,6 @@
       "company": "偉利科技股份有限公司",
       "min_years": null,
       "requirements": [
-        {
-          "skill": "Python",
-          "original_text": "",
-          "category": "language",
-          "required": true
-        },
-        {
-          "skill": "TypeScript",
-          "original_text": "",
-          "category": "language",
-          "required": true
-        },
-        {
-          "skill": "React",
-          "original_text": "",
-          "category": "framework",
-          "required": true
-        },
         {
           "skill": "LLM API Integration",
           "original_text": "",
@@ -1514,15 +1528,21 @@
           "required": true
         },
         {
-          "skill": "LLM Evaluation",
+          "skill": "Python",
           "original_text": "",
-          "category": "ml",
+          "category": "language",
           "required": true
         },
         {
-          "skill": "AI Coding Assistant",
+          "skill": "TypeScript",
           "original_text": "",
-          "category": "other",
+          "category": "language",
+          "required": true
+        },
+        {
+          "skill": "React",
+          "original_text": "",
+          "category": "framework",
           "required": true
         },
         {
@@ -1538,7 +1558,43 @@
           "required": true
         },
         {
-          "skill": "RAG",
+          "skill": "AI-Assisted Development Tools",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "LLM Evaluation",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "LLM Output Quality Analysis",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Production Monitoring",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "Requirement Analysis",
+          "original_text": "",
+          "category": "soft",
+          "required": true
+        },
+        {
+          "skill": "Software Testing",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Retrieval-Augmented Generation",
           "original_text": "",
           "category": "llm",
           "required": false
@@ -1574,13 +1630,13 @@
           "required": true
         },
         {
-          "skill": "AI Agent",
+          "skill": "LLM",
           "original_text": "",
           "category": "llm",
           "required": true
         },
         {
-          "skill": "LLM",
+          "skill": "AI Agent",
           "original_text": "",
           "category": "llm",
           "required": true
@@ -1604,6 +1660,24 @@
           "required": true
         },
         {
+          "skill": "LLM API Integration",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Multi-Agent Orchestration",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Agent Evaluation",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
           "skill": "Docker",
           "original_text": "",
           "category": "infra",
@@ -1622,10 +1696,25 @@
           "required": true
         },
         {
-          "skill": "Message Queue",
+          "skill": "Celery",
           "original_text": "",
           "category": "infra",
-          "required": true
+          "required": true,
+          "any_of": "g1"
+        },
+        {
+          "skill": "RabbitMQ",
+          "original_text": "",
+          "category": "infra",
+          "required": true,
+          "any_of": "g1"
+        },
+        {
+          "skill": "Redis",
+          "original_text": "",
+          "category": "data",
+          "required": true,
+          "any_of": "g1"
         },
         {
           "skill": "System Architecture Design",
@@ -1637,12 +1726,6 @@
           "skill": "Technical Writing",
           "original_text": "",
           "category": "other",
-          "required": true
-        },
-        {
-          "skill": "Workflow Orchestration",
-          "original_text": "",
-          "category": "infra",
           "required": true
         },
         {
@@ -1658,7 +1741,7 @@
           "required": true
         },
         {
-          "skill": "Issue Tracker Integration",
+          "skill": "Project Management Tool",
           "original_text": "",
           "category": "other",
           "required": true
@@ -1676,25 +1759,19 @@
           "required": true
         },
         {
-          "skill": "Evaluation Harness",
-          "original_text": "",
-          "category": "ml",
-          "required": true
-        },
-        {
           "skill": "Agent Production Deployment",
           "original_text": "",
           "category": "infra",
           "required": false
         },
         {
-          "skill": "FastAPI",
+          "skill": "Laravel",
           "original_text": "",
           "category": "framework",
           "required": false
         },
         {
-          "skill": "Laravel",
+          "skill": "FastAPI",
           "original_text": "",
           "category": "framework",
           "required": false
@@ -1706,9 +1783,15 @@
           "required": false
         },
         {
-          "skill": "DevOps/SRE",
+          "skill": "DevOps",
           "original_text": "",
           "category": "infra",
+          "required": false
+        },
+        {
+          "skill": "Workflow Automation",
+          "original_text": "",
+          "category": "other",
           "required": false
         }
       ],
@@ -1742,7 +1825,7 @@
           "required": true
         },
         {
-          "skill": "Unix-like Operating System",
+          "skill": "Unix-like Operating Systems",
           "original_text": "",
           "category": "infra",
           "required": true
@@ -1768,7 +1851,7 @@
         {
           "skill": "Git",
           "original_text": "",
-          "category": "infra",
+          "category": "other",
           "required": true
         },
         {
@@ -1780,7 +1863,7 @@
         {
           "skill": "Bash",
           "original_text": "",
-          "category": "language",
+          "category": "infra",
           "required": true
         },
         {
@@ -1802,7 +1885,55 @@
           "required": true
         },
         {
+          "skill": "Model Inference Optimization",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Data Drift Monitoring",
+          "original_text": "",
+          "category": "ml",
+          "required": true
+        },
+        {
+          "skill": "Requirement Analysis",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "System Architecture Design",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
+          "skill": "Code Review",
+          "original_text": "",
+          "category": "other",
+          "required": true
+        },
+        {
           "skill": "Computer Vision",
+          "original_text": "",
+          "category": "ml",
+          "required": false
+        },
+        {
+          "skill": "Object Detection",
+          "original_text": "",
+          "category": "ml",
+          "required": false
+        },
+        {
+          "skill": "Instance Segmentation",
+          "original_text": "",
+          "category": "ml",
+          "required": false
+        },
+        {
+          "skill": "Anomaly Detection",
           "original_text": "",
           "category": "ml",
           "required": false
@@ -1814,7 +1945,7 @@
           "required": false
         },
         {
-          "skill": "Vision Language Model",
+          "skill": "VLM",
           "original_text": "",
           "category": "llm",
           "required": false
@@ -1838,19 +1969,13 @@
           "required": false
         },
         {
-          "skill": "Audio Anomaly Detection",
+          "skill": "ASR",
           "original_text": "",
           "category": "ml",
           "required": false
         },
         {
-          "skill": "Speech Recognition",
-          "original_text": "",
-          "category": "ml",
-          "required": false
-        },
-        {
-          "skill": "Text-to-Speech",
+          "skill": "TTS",
           "original_text": "",
           "category": "ml",
           "required": false
@@ -1868,12 +1993,6 @@
       "min_years": null,
       "requirements": [
         {
-          "skill": "AI-Assisted Development Tools",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
           "skill": "Frontend Framework",
           "original_text": "",
           "category": "framework",
@@ -1886,7 +2005,7 @@
           "required": true
         },
         {
-          "skill": "RESTful API Design",
+          "skill": "REST API",
           "original_text": "",
           "category": "other",
           "required": true
@@ -1898,9 +2017,9 @@
           "required": true
         },
         {
-          "skill": "Third-party API Integration",
+          "skill": "AI Coding Assistant",
           "original_text": "",
-          "category": "other",
+          "category": "llm",
           "required": true
         },
         {
@@ -1910,34 +2029,39 @@
           "required": true
         },
         {
-          "skill": "SaaS / Marketplace Development",
+          "skill": "Product Design",
           "original_text": "",
           "category": "other",
-          "required": true
+          "required": true,
+          "any_of": "g1"
+        },
+        {
+          "skill": "UX Design",
+          "original_text": "",
+          "category": "other",
+          "required": true,
+          "any_of": "g1"
         },
         {
           "skill": "System Architecture",
           "original_text": "",
           "category": "other",
-          "required": true
+          "required": true,
+          "any_of": "g1"
         },
         {
-          "skill": "User Experience Design",
+          "skill": "CI/CD Automation",
           "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
-          "skill": "DevOps Automation",
-          "original_text": "",
-          "category": "other",
-          "required": false
+          "category": "infra",
+          "required": false,
+          "any_of": "g2"
         },
         {
           "skill": "Cloud Deployment",
           "original_text": "",
           "category": "infra",
-          "required": false
+          "required": false,
+          "any_of": "g2"
         }
       ],
       "responsibilities": []
@@ -1952,7 +2076,52 @@
       "min_years": 0,
       "requirements": [
         {
-          "skill": "AI Agent",
+          "skill": "Python",
+          "original_text": "",
+          "category": "language",
+          "required": true,
+          "any_of": "g1"
+        },
+        {
+          "skill": "C#",
+          "original_text": "",
+          "category": "language",
+          "required": true,
+          "any_of": "g1"
+        },
+        {
+          "skill": ".NET",
+          "original_text": "",
+          "category": "framework",
+          "required": true,
+          "any_of": "g1"
+        },
+        {
+          "skill": "REST API",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "SQL",
+          "original_text": "",
+          "category": "data",
+          "required": true
+        },
+        {
+          "skill": "Git",
+          "original_text": "",
+          "category": "infra",
+          "required": true
+        },
+        {
+          "skill": "LLM",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "Prompt Engineering",
           "original_text": "",
           "category": "llm",
           "required": true
@@ -1964,13 +2133,19 @@
           "required": true
         },
         {
-          "skill": "AI Application Development",
+          "skill": "Embedding",
           "original_text": "",
           "category": "llm",
           "required": true
         },
         {
-          "skill": "Prompt Engineering",
+          "skill": "Vector Search",
+          "original_text": "",
+          "category": "data",
+          "required": true
+        },
+        {
+          "skill": "AI Agent",
           "original_text": "",
           "category": "llm",
           "required": true
@@ -1991,78 +2166,6 @@
           "skill": "MCP",
           "original_text": "",
           "category": "llm",
-          "required": true
-        },
-        {
-          "skill": "REST API",
-          "original_text": "",
-          "category": "infra",
-          "required": true
-        },
-        {
-          "skill": "Enterprise System Integration",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
-          "skill": "AI Workflow",
-          "original_text": "",
-          "category": "llm",
-          "required": true
-        },
-        {
-          "skill": "Software Testing",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
-          "skill": "Responsible AI",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
-          "skill": "Python",
-          "original_text": "",
-          "category": "language",
-          "required": true
-        },
-        {
-          "skill": "C#/.NET",
-          "original_text": "",
-          "category": "language",
-          "required": true
-        },
-        {
-          "skill": "SQL",
-          "original_text": "",
-          "category": "data",
-          "required": true
-        },
-        {
-          "skill": "Git",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
-          "skill": "LLM",
-          "original_text": "",
-          "category": "llm",
-          "required": true
-        },
-        {
-          "skill": "Embedding",
-          "original_text": "",
-          "category": "ml",
-          "required": true
-        },
-        {
-          "skill": "Vector Search",
-          "original_text": "",
-          "category": "ml",
           "required": true
         },
         {
@@ -2098,19 +2201,19 @@
         {
           "skill": "SharePoint",
           "original_text": "",
-          "category": "infra",
+          "category": "other",
           "required": false
         },
         {
           "skill": "Microsoft Graph",
           "original_text": "",
-          "category": "infra",
+          "category": "other",
           "required": false
         },
         {
           "skill": "Power Automate",
           "original_text": "",
-          "category": "infra",
+          "category": "other",
           "required": false
         },
         {
@@ -2132,13 +2235,19 @@
           "required": false
         },
         {
-          "skill": "Microsoft Entra ID",
+          "skill": "Entra ID",
           "original_text": "",
           "category": "infra",
           "required": false
         },
         {
-          "skill": "Document Parsing and OCR",
+          "skill": "Document Parsing",
+          "original_text": "",
+          "category": "ml",
+          "required": false
+        },
+        {
+          "skill": "OCR",
           "original_text": "",
           "category": "ml",
           "required": false
@@ -2147,6 +2256,12 @@
           "skill": "Multimodal AI",
           "original_text": "",
           "category": "ml",
+          "required": false
+        },
+        {
+          "skill": "Enterprise System Integration",
+          "original_text": "",
+          "category": "other",
           "required": false
         }
       ],
@@ -2164,19 +2279,19 @@
         {
           "skill": "Backend Development",
           "original_text": "",
-          "category": "other",
+          "category": "framework",
           "required": true
         },
         {
-          "skill": "Full-Stack Development",
+          "skill": "Frontend Development",
           "original_text": "",
-          "category": "other",
+          "category": "framework",
           "required": true
         },
         {
-          "skill": "System Design",
+          "skill": "LLM Integration",
           "original_text": "",
-          "category": "other",
+          "category": "llm",
           "required": true
         },
         {
@@ -2186,7 +2301,7 @@
           "required": true
         },
         {
-          "skill": "LLM Integration",
+          "skill": "Tool Calling",
           "original_text": "",
           "category": "llm",
           "required": true
@@ -2198,58 +2313,34 @@
           "required": true
         },
         {
-          "skill": "AI Coding Agent",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
-          "skill": "Tool Calling",
-          "original_text": "",
-          "category": "llm",
-          "required": true
-        },
-        {
-          "skill": "Context Management",
-          "original_text": "",
-          "category": "llm",
-          "required": true
-        },
-        {
           "skill": "Model Evaluation",
           "original_text": "",
           "category": "ml",
           "required": true
         },
         {
-          "skill": "Agent Testing",
+          "skill": "Behavior Testing",
           "original_text": "",
           "category": "other",
           "required": true
         },
         {
-          "skill": "Deployment",
+          "skill": "System Integration",
           "original_text": "",
           "category": "infra",
           "required": true
         },
         {
-          "skill": "Monitoring",
+          "skill": "Production Monitoring",
           "original_text": "",
           "category": "infra",
           "required": true
         },
         {
-          "skill": "Frontend Development",
+          "skill": "Agent Orchestration",
           "original_text": "",
-          "category": "framework",
-          "required": true
-        },
-        {
-          "skill": "Enterprise System Integration",
-          "original_text": "",
-          "category": "other",
-          "required": true
+          "category": "llm",
+          "required": false
         },
         {
           "skill": "Agent-to-Agent Collaboration",
@@ -2270,51 +2361,21 @@
           "required": false
         },
         {
+          "skill": "Context Management",
+          "original_text": "",
+          "category": "llm",
+          "required": false
+        },
+        {
           "skill": "Vector Database",
           "original_text": "",
           "category": "data",
           "required": false
         },
         {
-          "skill": "Agent Orchestration",
-          "original_text": "",
-          "category": "llm",
-          "required": false
-        },
-        {
           "skill": "Cloud Deployment",
           "original_text": "",
           "category": "infra",
-          "required": false
-        },
-        {
-          "skill": "Production Operations",
-          "original_text": "",
-          "category": "infra",
-          "required": false
-        },
-        {
-          "skill": "Latency Optimization",
-          "original_text": "",
-          "category": "ml",
-          "required": false
-        },
-        {
-          "skill": "Cost Optimization",
-          "original_text": "",
-          "category": "ml",
-          "required": false
-        },
-        {
-          "skill": "Tool Execution Error Handling",
-          "original_text": "",
-          "category": "other",
-          "required": false
-        },
-        {
-          "skill": "Advertising Systems",
-          "original_text": "",
-          "category": "other",
           "required": false
         }
       ],
@@ -2342,31 +2403,31 @@
           "required": true
         },
         {
+          "skill": "Multi-Agent Systems",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
           "skill": "Agent Framework",
           "original_text": "",
           "category": "framework",
           "required": true
         },
         {
-          "skill": "LLM Evaluation",
+          "skill": "Agent Evaluation",
           "original_text": "",
-          "category": "llm",
+          "category": "other",
           "required": true
         },
         {
-          "skill": "Post-Training",
+          "skill": "LLM Evaluation Framework",
           "original_text": "",
-          "category": "llm",
+          "category": "framework",
           "required": true
         },
         {
-          "skill": "LoRA",
-          "original_text": "",
-          "category": "ml",
-          "required": true
-        },
-        {
-          "skill": "Fine-Tuning Framework",
+          "skill": "Fine-tuning Framework",
           "original_text": "",
           "category": "ml",
           "required": true
@@ -2378,7 +2439,54 @@
           "required": true
         },
         {
-          "skill": "LLM Inference Serving",
+          "skill": "SFT",
+          "original_text": "",
+          "category": "ml",
+          "required": true,
+          "any_of": "g1"
+        },
+        {
+          "skill": "LoRA",
+          "original_text": "",
+          "category": "ml",
+          "required": true,
+          "any_of": "g1"
+        },
+        {
+          "skill": "QLoRA",
+          "original_text": "",
+          "category": "ml",
+          "required": true,
+          "any_of": "g1"
+        },
+        {
+          "skill": "DPO",
+          "original_text": "",
+          "category": "ml",
+          "required": true,
+          "any_of": "g1"
+        },
+        {
+          "skill": "GRPO",
+          "original_text": "",
+          "category": "ml",
+          "required": true,
+          "any_of": "g1"
+        },
+        {
+          "skill": "Training Dataset Construction",
+          "original_text": "",
+          "category": "data",
+          "required": true
+        },
+        {
+          "skill": "RAG",
+          "original_text": "",
+          "category": "llm",
+          "required": true
+        },
+        {
+          "skill": "LLM Inference Framework",
           "original_text": "",
           "category": "infra",
           "required": true
@@ -2390,9 +2498,9 @@
           "required": true
         },
         {
-          "skill": "Model Selection",
+          "skill": "Private Model Deployment",
           "original_text": "",
-          "category": "ml",
+          "category": "infra",
           "required": true
         },
         {
@@ -2408,9 +2516,15 @@
           "required": false
         },
         {
-          "skill": "AI Safety Governance",
+          "skill": "Open-Source LLMs",
           "original_text": "",
           "category": "llm",
+          "required": false
+        },
+        {
+          "skill": "AI Safety Governance",
+          "original_text": "",
+          "category": "other",
           "required": false
         }
       ],
@@ -2429,13 +2543,22 @@
           "skill": "Python",
           "original_text": "",
           "category": "language",
-          "required": true
+          "required": true,
+          "any_of": "g1"
         },
         {
-          "skill": "JavaScript/TypeScript",
+          "skill": "JavaScript",
           "original_text": "",
           "category": "language",
-          "required": true
+          "required": true,
+          "any_of": "g1"
+        },
+        {
+          "skill": "TypeScript",
+          "original_text": "",
+          "category": "language",
+          "required": true,
+          "any_of": "g1"
         },
         {
           "skill": "REST API",
@@ -2459,31 +2582,43 @@
           "skill": "RPA",
           "original_text": "",
           "category": "other",
-          "required": true
+          "required": true,
+          "any_of": "g2"
+        },
+        {
+          "skill": "Process Automation",
+          "original_text": "",
+          "category": "other",
+          "required": true,
+          "any_of": "g2"
         },
         {
           "skill": "System Integration",
           "original_text": "",
           "category": "other",
-          "required": true
+          "required": true,
+          "any_of": "g2"
         },
         {
           "skill": "LLM API Integration",
           "original_text": "",
           "category": "llm",
-          "required": true
+          "required": true,
+          "any_of": "g3"
         },
         {
           "skill": "RAG",
           "original_text": "",
           "category": "llm",
-          "required": true
+          "required": true,
+          "any_of": "g3"
         },
         {
           "skill": "AI Agent",
           "original_text": "",
           "category": "llm",
-          "required": true
+          "required": true,
+          "any_of": "g3"
         },
         {
           "skill": "Requirement Analysis",
@@ -2492,21 +2627,9 @@
           "required": true
         },
         {
-          "skill": "Software Testing",
+          "skill": "Software Deployment",
           "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
-          "skill": "Debugging",
-          "original_text": "",
-          "category": "other",
-          "required": true
-        },
-        {
-          "skill": "Code Review",
-          "original_text": "",
-          "category": "other",
+          "category": "infra",
           "required": true
         },
         {
@@ -2516,9 +2639,9 @@
           "required": true
         },
         {
-          "skill": "MCP",
+          "skill": "Code Review",
           "original_text": "",
-          "category": "llm",
+          "category": "other",
           "required": true
         }
       ],

@@ -40,11 +40,13 @@ def or_scope(line: str) -> tuple[str, int, int, int, int] | None:
     - 有量詞（任一、其中之一、one of…）→ 整行都是選項
     - 「或」在清單最後一段（「A、B 或 C」）→ 整串都是選項
     - 「或」在前面（「A 或 B、C、D」）→ 只有「或」那一段
-    - 「或以上」「或相關科系」「Bachelor's or Master's」先遮掉，不算線索"""
+    - 「或以上」「或相關科系」「Bachelor's or Master's」先遮掉，不算線索
+    - 舉例的字（等、例如、such as）出現在「或」前面 →「such as A, B, or C」是舉例清單，算弱線索（11/23）"""
     clean = NOT_OR.sub(lambda m: " " * len(m.group()), line)   # 遮掉，位置不變
     cue = STRONG.search(clean)
-    if not cue:
-        return ("weak", 0, len(line), 0, len(line)) if WEAK.search(clean) else None
+    weak = WEAK.search(clean)
+    if not cue or (weak and weak.start() < cue.start() and not QUANT.search(clean)):
+        return ("weak", 0, len(line), 0, len(line)) if weak else None
     spans, start = [], 0
     for m in SEP.finditer(clean):
         spans.append((start, m.start()))

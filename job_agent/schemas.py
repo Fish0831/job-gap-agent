@@ -6,7 +6,6 @@ from typing import Literal
 
 import yaml
 from pydantic import BaseModel, Field, model_validator
-from pydantic.json_schema import SkipJsonSchema
 
 Level = Literal["basic", "working", "strong"]
 Status = Literal["have", "partial", "missing"]
@@ -23,9 +22,12 @@ class Requirement(BaseModel):
     category: Category
     required: bool = Field(description="True if must-have; False if nice-to-have / preferred / 加分")
     # 「A 或 B」群組標籤（ADR-10）：同一份職缺裡標籤相同的項目是一組，原文只要求其中一個。
-    # 步驟 1（現在）：SkipJsonSchema → 不放進給模型的格式，也不算進快取指紋 → 不重拆、行為不變。
-    # 步驟 2：改成一般欄位＋說明，拆解規則（extract.SYSTEM）教模型標 → 重拆一次。
-    any_of: SkipJsonSchema[str | None] = None
+    # 11/23 步驟 1 先不給模型看（行為不變）；步驟 2 放進格式＋拆解規則教模型標 → 重拆一次。
+    # 模型標的群組還要通過程式檢查（anyof.clean_groups），沒有根據就取消。
+    any_of: str | None = Field(
+        default=None,
+        description="Shared label (e.g. 'g1') for alternatives when the posting accepts any one of them; null otherwise",
+    )
 
 
 class JobRequirements(BaseModel):
