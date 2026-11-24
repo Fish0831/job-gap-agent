@@ -118,6 +118,7 @@ def test_app_result_shows_closest_role_and_top_jobs(tmp_path, monkeypatch):
     assert any("你最接近 **AI 應用／Agent 工程師**" in md.value for md in at.markdown)
     top = at.dataframe[1].value                                 # [0] 樣本職缺、[1] 最適合的職缺
     assert len(top) == 5 and list(top["適合度"][:3]) == [1.0, 1.0, 0.5]
+    assert "年資" in top.columns and "年資" in at.dataframe[0].value.columns   # 11/24：列出最低年資
 
 def test_app_says_close_when_roles_are_near(tmp_path, monkeypatch):
     """兩類平均差不到 0.10 → 顯示「差不多接近」，不說「最接近」。"""

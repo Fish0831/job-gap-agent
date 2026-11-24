@@ -5,7 +5,7 @@
     "job": {
       "title": "AI 產品工程師 AI Product Engineer",
       "company": "未來巢科技股份有限公司",
-      "min_years": null,
+      "min_years": 0,
       "requirements": [
         {
           "skill": "Requirement Analysis",
@@ -119,7 +119,7 @@
     "job": {
       "title": "AI Agent 應用工程師",
       "company": "光寶科技股份有限公司",
-      "min_years": null,
+      "min_years": 0,
       "requirements": [
         {
           "skill": "Python",
@@ -203,7 +203,7 @@
     "job": {
       "title": "AI原生軟體工程師",
       "company": "哲煜科技股份有限公司",
-      "min_years": null,
+      "min_years": 1,
       "requirements": [
         {
           "skill": "Programming Language",
@@ -388,7 +388,7 @@
     "job": {
       "title": "IT AI/ML Engineer",
       "company": "TSMC",
-      "min_years": null,
+      "min_years": 0,
       "requirements": [
         {
           "skill": "Python",
@@ -772,7 +772,7 @@
     "job": {
       "title": "機器學習工程師",
       "company": "台達電子工業股份有限公司",
-      "min_years": null,
+      "min_years": 1,
       "requirements": [
         {
           "skill": "Machine Learning",
@@ -874,7 +874,7 @@
     "job": {
       "title": "AI Agent Development Engineer",
       "company": "NVIDIA",
-      "min_years": null,
+      "min_years": 0,
       "requirements": [
         {
           "skill": "AI Agent",
@@ -976,7 +976,7 @@
     "job": {
       "title": "AI 應用整合工程師",
       "company": "威信資訊工程有限公司",
-      "min_years": null,
+      "min_years": 1,
       "requirements": [
         {
           "skill": "Python",
@@ -1215,7 +1215,7 @@
     "job": {
       "title": "Machine Learning Engineer",
       "company": "洞見未來科技股份有限公司",
-      "min_years": null,
+      "min_years": 2,
       "requirements": [
         {
           "skill": "Python",
@@ -1311,7 +1311,7 @@
     "job": {
       "title": "AI/ML 應用工程師",
       "company": "皓展資訊股份有限公司",
-      "min_years": null,
+      "min_years": 1,
       "requirements": [
         {
           "skill": "Python",
@@ -1501,7 +1501,7 @@
     "job": {
       "title": "AI應用工程師",
       "company": "偉利科技股份有限公司",
-      "min_years": null,
+      "min_years": 0,
       "requirements": [
         {
           "skill": "LLM API Integration",
@@ -1804,7 +1804,7 @@
     "job": {
       "title": "AI應用工程師",
       "company": "GARMIN_台灣國際航電股份有限公司",
-      "min_years": null,
+      "min_years": 0,
       "requirements": [
         {
           "skill": "Machine Learning",
@@ -1990,7 +1990,7 @@
     "job": {
       "title": "AI 驅動軟體工程師",
       "company": "PRO360 達人網",
-      "min_years": null,
+      "min_years": 0,
       "requirements": [
         {
           "skill": "Frontend Framework",
@@ -2537,7 +2537,7 @@
     "job": {
       "title": "AI 應用暨自動化工程師",
       "company": "定曜科技股份有限公司",
-      "min_years": null,
+      "min_years": 0,
       "requirements": [
         {
           "skill": "Python",

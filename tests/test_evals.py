@@ -242,3 +242,23 @@ def test_fit_eval_runs_without_ratings(tmp_path):
     r = fit_eval.evaluate(runs, fit_eval.load_gold(tmp_path / "nope.csv"))   # 檔案不存在 → 只做結構檢查
     assert r["rated"] == 0 and r["program_top5"][0] == ("01", 1.0)
     assert "只做結構檢查" in fit_eval.to_markdown(r)
+
+
+def test_fit_eval_ranks_ties_get_average_rank():
+    """3 級評分很多同分：同分給平均名次，不再照編號排（11/18 的「意見差最多」被編號污染）。"""
+    assert fit_eval.ranks({"01": 3, "02": 2, "03": 2, "04": 2, "05": 1}) == {"01": 1, "02": 3, "03": 3, "04": 3, "05": 5}
+
+
+def test_fit_eval_only_one_role_and_shows_years(tmp_path):
+    (tmp_path / "fit.csv").write_text("job_id,title,company,role,would_apply,note\n01,A,,,3,\n02,B,,,1,\n03,C,,,1,\n",
+                                      encoding="utf-8")
+    gold = fit_eval.load_gold(tmp_path / "fit.csv")
+    def run(j, status, years):
+        job = JobRequirements(title="x", requirements=[], min_years=years)
+        return Run(j, job, [MatchResult(skill="Python", required=True, status=status)])
+    runs = [[run("01", "partial", 0), run("02", "have", 5), run("03", "missing", None)]]
+    r = fit_eval.evaluate(runs, gold, only={"01", "03"})                 # 02 不是這個職務 → 不算
+    assert r["n_jobs"] == 2 and r["top5_would_apply"] == 1
+    assert [d[-1] for d in r["top5_detail"]] == ["不限", "—"]
+    md = fit_eval.to_markdown(r, "ai-app")
+    assert "職務 ai-app" in md and "| 年資 |" in md

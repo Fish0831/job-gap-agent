@@ -88,20 +88,30 @@ def cache_path(path: str | Path, model: str) -> Path:
     return CACHE_DIR / f"{Path(path).stem}_{fingerprint}.json"
 
 
+def header_years(meta: dict) -> int | None:
+    """職缺檔開頭的 `years:`（例如 104 的「工作經歷：2年以上」→ years: 2；不拘 → years: 0）。
+    沒寫或寫錯 → None（用模型從原文抽的 min_years）。"""
+    value = meta.get("years", "").strip()
+    return int(value) if value.isdigit() else None
+
+
 def extract_requirements(path: str | Path, use_cache: bool = True, client=None) -> tuple[JobRequirements, dict]:
-    """讀職缺檔 → 拆解。同一份職缺拆過就直接讀快取，不再花錢、結果也固定。"""
+    """讀職缺檔 → 拆解。同一份職缺拆過就直接讀快取，不再花錢、結果也固定。
+    開頭有 `years:` 就用它當最低年資（像 role: 一樣不送給模型 → 不算進指紋、不重拆）。"""
     model = model_for("extract")
     cache = cache_path(path, model)
+    meta, body = read_job(path)
     if use_cache and cache.exists():
         job = JobRequirements.model_validate_json(cache.read_text(encoding="utf-8"))
-        return job, {"model": model, "input_tokens": 0, "output_tokens": 0,
-                     "cost_usd": 0.0, "seconds": 0.0, "cached": True}
-
-    meta, body = read_job(path)
-    job, stats = extract_from_text(body, meta.get("title", ""), meta.get("company", ""), client)
-    CACHE_DIR.mkdir(exist_ok=True)
-    cache.write_text(job.model_dump_json(indent=2), encoding="utf-8")
-    return job, {**stats, "cached": False}
+        stats = {"model": model, "input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0, "seconds": 0.0, "cached": True}
+    else:
+        job, stats = extract_from_text(body, meta.get("title", ""), meta.get("company", ""), client)
+        CACHE_DIR.mkdir(exist_ok=True)
+        cache.write_text(job.model_dump_json(indent=2), encoding="utf-8")
+        stats = {**stats, "cached": False}
+    if header_years(meta) is not None:
+        job.min_years = header_years(meta)
+    return job, stats
 
 
 def print_summary(job: JobRequirements, stats: dict) -> None:

@@ -140,3 +140,17 @@ def test_any_of_is_in_the_schema_and_rules():
     import json
     assert "any_of" in json.dumps(JobRequirements.model_json_schema())
     assert "`any_of`" in extract.SYSTEM and "經驗或研究背景" in extract.SYSTEM
+
+
+def test_header_years_overrides_without_reextract(tmp_path, monkeypatch, fake):
+    """開頭的 years: 蓋過模型抽的年資；它不送給模型 → 改了不重拆（第二次不呼叫 LLM）。"""
+    monkeypatch.chdir(tmp_path)
+    f = tmp_path / "01.txt"
+    data = {"title": "x", "min_years": None, "requirements": [
+        {"skill": "Python", "original_text": "熟悉 Python", "category": "language", "required": True}]}
+    f.write_text("title: x\n---\n熟悉 Python\n", encoding="utf-8")
+    client = fake(data)
+    assert extract.extract_requirements(f, client=client)[0].min_years is None
+    f.write_text("title: x\nyears: 2\n---\n熟悉 Python\n", encoding="utf-8")
+    job, stats = extract.extract_requirements(f, client=client)
+    assert job.min_years == 2 and stats["cached"] and client.calls == 1

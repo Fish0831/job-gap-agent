@@ -127,13 +127,18 @@ def choose_role(samples, roles: dict[str, str]) -> str | None:
     return role
 
 
+def years_text(job) -> str:
+    """職缺的最低年資（拆解時抽出來的 min_years）。沒寫 → —；0 → 不限。"""
+    return "不限" if job.min_years == 0 else (f"{job.min_years} 年以上" if job.min_years else "—")
+
+
 def show_samples(samples, roles: dict[str, str]) -> None:
     with st.expander(f"樣本職缺（{len(samples)} 份）"):
         st.caption("作者自己收集的台灣 AI 相關職缺（2026 年 10–11 月）。只保留技能清單，不含職缺原文。"
                    "如果你找的是其他領域的工作，這份報告的參考價值會比較低。")
         st.dataframe(
             [{"編號": jid, "職務": ROLES.get(roles.get(jid, ""), "—"), "職稱": j.title, "公司": j.company or "—",
-              "必備技能數": sum(r.required for r in j.requirements)} for jid, j in samples],
+              "年資": years_text(j), "必備技能數": sum(r.required for r in j.requirements)} for jid, j in samples],
             hide_index=True, width="stretch",
         )
 
@@ -183,14 +188,15 @@ def show_fit(runs, samples_by_id, roles: dict[str, str]) -> None:
                 "職稱": samples_by_id[f.job_id].title if f.job_id in samples_by_id else f.job_id,
                 "公司": (samples_by_id[f.job_id].company or "—") if f.job_id in samples_by_id else "—",
                 "職務": ROLES.get(roles.get(f.job_id, ""), "—"),
+                "年資": years_text(samples_by_id[f.job_id]) if f.job_id in samples_by_id else "—",
                 "必備缺口": f"{f.missing_required} / {f.n_required}",
             } for f in fits[:TOP_FITS]],
             column_config={"適合度": st.column_config.ProgressColumn("適合度", min_value=0, max_value=1,
                                                                     format="percent")},
             hide_index=True, width="stretch",
         )
-        st.caption("適合度 = (有 + 0.5 × 部分) ÷ 必備技能數，只看必備技能，年資不算進來；"
-                   "「A 或 B」多選一算一個條件。必備缺口 = 必備技能裡「沒有」的數量。")
+        st.caption("適合度 = (有 + 0.5 × 部分) ÷ 必備技能數，只看必備技能；「A 或 B」多選一算一個條件。"
+                   "必備缺口 = 必備技能裡「沒有」的數量。年資是職缺寫的最低要求，只列出來給你判斷，不算進適合度。")
 
 
 def show_report(runs, samples_by_id, role_label: str, roles: dict[str, str]) -> None:
