@@ -80,7 +80,7 @@ def _locate(r: Requirement, line: str, masked: list[str]) -> int | None:
 
 
 def or_lint(job: JobRequirements, body: str) -> list[dict]:
-    """「A 或 B」的檢查（docs/naming-and-any-of.md 第 5 節）。只看必備項目，每一行：
+    """「A 或 B」的檢查（規則見 docs/design.md 第 5 節）。只看必備項目，每一行：
     1. or_scope 判斷有沒有「或」的線索、範圍到哪裡（「或以上」「或相關科系」不算）
     2. 範圍裡有 2 個以上必備項目，而且「或」那一段裡至少一個 → 下判定：
        split = 強線索、項目沒有標成同一組（很可能被拆錯，目標 0）

@@ -1,10 +1,11 @@
-# 求職 Agent 設計文件（v0.5，2026-11-16）
+# 求職 Agent 設計文件（v0.6，2026-11-24）
 
 > 專案名稱 **job-gap-agent**。網頁 demo：https://job-gap-agent.streamlit.app
-> 範圍：v1（2026-11-06 完成）＋履歷 → profile 草稿（11/10）＋網頁 demo（11/11–11/12 上線）。之後的版本列在最後。
+> 範圍：v1（2026-11-06 完成）＋履歷 → profile 草稿（11/10）＋網頁 demo（11/11–11/12 上線）＋職務類別、Top 5、評估、「A 或 B」（11/16–11/24）。之後的版本列在最後。
 > v0.3 更新：市場缺口報告、structured outputs、拆解快取、模型比較結論、技能名稱統一。
 > v0.4 更新：履歷 → profile 草稿（⓪）與轉換評估、11 月中網頁 demo 改成「上傳履歷 → 缺口報告」、職缺 API 移到更遠的計畫、專案往 agent 發展的方向（第 15 節是設計決策紀錄）。
 > v0.5 更新：網頁 demo 上線（Streamlit：上傳履歷 → 草稿 → 和樣本職缺平行比對 → 市場缺口報告）、公開樣本職缺（只有技能清單）、送出前遮掉聯絡資料、三層費用保護、報告頁改成卡片＋圖表、畫面不顯示費用、上傳上限 10 MB、定位（主打 AI 工程師相關職缺）、下一步：擴充樣本＋職務類別。
+> v0.6 更新：職務類別（人標 `role:`，網頁先選職務）、20 份樣本、「最適合你的職缺 Top 5」＋「你最接近的職務類別」、優先度改成逐份加總、評估腳本（`evals/`，三層評估見 `docs/evaluation.md`）、同義詞表 13 → 49 組、「A 或 B」多選一條件（`any_of`，第 5 節）、職缺年資（`years:`）、試過但不採用的「跨職缺取多數」（第 15 節）。
 
 ## 1. 一句話
 
@@ -16,11 +17,11 @@
 
 **定位（11/11）：** 主打「分析 **AI 工程師相關職缺**」。和其他工具的差別：① 專門做 AI 職缺；② 有作品證明才算「有」；③ 跨職缺的市場統計。（台灣就業通預計 2026 年底推出「技能配適度分析」，算是類似的功能，所以重點放在 AI 職缺和作品證據。）
 
-**目前狀態（11/12）：** 第一個里程碑「上傳履歷 → 缺口報告」已經上線（第 6 節的網頁版）。
+**目前狀態（11/24）：** 第一個里程碑「上傳履歷 → 缺口報告」已經上線（第 6 節的網頁版）；11/16–11/24 加上職務類別、最適合的職缺、評估腳本和「A 或 B」條件。
 
 ## 2. 使用者與使用情境
 
-使用者：我自己（AI Product Engineer／AI 應用工程師／ML Engineer 方向，研發替代役期間準備轉職）。之後會部署成網頁，讓別人也能用。
+使用者：我自己（目標職務是 **AI 應用／Agent 工程師**，研發替代役期間準備轉職）。之後會部署成網頁，讓別人也能用。
 
 | 情境 | 我會怎麼用 |
 |---|---|
@@ -33,11 +34,11 @@
 
 | 輸入 | 格式 | 說明 |
 |---|---|---|
-| 職缺 | 純文字檔（`jobs/*.txt`），中文或英文；`---` 上面是 `title:`、`company:`，下面是原文 | 從求職網站**手動複製貼上**，不寫爬蟲 |
+| 職缺 | 純文字檔（`jobs/*.txt`），中文或英文；`---` 上面是欄位，下面是原文 | 從求職網站**手動複製貼上**，不寫爬蟲。欄位：`title:`、`company:`（會送給模型）；`role:`（職務類別，人標）、`years:`（最低年資，104 的「工作經歷」，11/24）、`url:`、`collected:`（**不送給模型、不算進快取指紋** → 改了不重拆） |
 | 我的技能檔 | `profile.yaml`（私人，不公開；repo 裡放 `profile.example.yaml` 範例） | 列出作品／經歷（每個有 id），以及每個技能的程度和對應的作品 |
 | 同義詞表 | `skill_synonyms.yaml`（公開） | `統一名稱: [其他寫法]`，程式查表統一技能名稱 |
 | 履歷（11/10） | `.pdf`、`.docx`、`.txt`、`.md`（私人，放 `resumes/`，.gitignore） | ⓪ 轉成 profile 草稿（格式和 `profile.yaml` 一樣），檢查後可以直接用 `--profile` |
-| 樣本職缺（11/11） | `samples/jobs.json`（公開） | 網頁版比對用的 10 份職缺。由 `python -m job_agent.samples jobs` 從 `jobs/` 的拆解結果匯出，**只留職稱、公司、年資、技能名稱／類別／必備或加分**；職缺原文（`original_text`）和工作內容摘要清空 |
+| 樣本職缺（11/11，11/16 擴充） | `samples/jobs.json`（公開） | 網頁版比對用的 20 份職缺（ai-app 7、ml 8、AI 原生全端 5），每份附 `role`。由 `python -m job_agent.samples jobs` 從 `jobs/` 的拆解結果匯出，**只留職稱、公司、年資、技能名稱／類別／必備或加分／「A 或 B」群組（`any_of`）**；職缺原文（`original_text`）和工作內容摘要清空 |
 
 `profile.yaml` 的樣子：
 
@@ -106,7 +107,8 @@ skills:
 
 | 分頁 | 內容 |
 |---|---|
-| 📊 市場缺口報告 | 三張卡片（比對的職缺數、必備技能有／部分／沒有、最該先補）→ **最該先補的技能**長條圖（沒有＝紅、部分＝橘、⚠ ＝判斷不穩定，滑鼠移上去看各份判斷）→ **我最有競爭力的技能**標籤 → **完整統計**（可以點欄位排序，「出現在」列公司名稱） |
+| （分析前） | **選目標職務**（11/16）：AI 應用／Agent 工程師、ML 工程師、AI 原生全端工程師或全部；選了就只拿那一類職缺比對、統計。樣本職缺表列出職務和**年資**（11/24） |
+| 📊 市場缺口報告 | 三張卡片（比對的職缺數、必備技能有／部分／沒有、最該先補）→ **🎯 最適合你的職缺 Top 5**（適合度、職務、年資、必備缺口；11/17）＋**你最接近的職務類別**（選「全部」時才顯示；兩類差不到 0.10 就說「差不多接近」）→ **最該先補的技能**長條圖（沒有＝紅、部分＝橘、⚠ ＝判斷不穩定，滑鼠移上去看各份判斷）→ **我最有競爭力的技能**標籤 → **完整統計**（可以點欄位排序，「出現在」列公司名稱） |
 | 📝 技能草稿 | 作品卡片、技能分兩組（有作品證明／只列在技能欄）、程式清理紀錄、下載草稿 YAML |
 
 - 排序、統計和 CLI 的市場報告用同一套函式（`aggregate`、`priority`、`top_gaps`、`strengths`），只是畫法不同。
@@ -115,8 +117,10 @@ skills:
 市場報告全部由程式統計，不靠 LLM：
 
 - **需求分數** = 必備 2 分、加分 1 分，逐份加總
-- **優先度** = 每份職缺各算一次再加總：必備 2／加分 1 × 那一份的缺口權重（沒有 2、部分 1、有 0）。所有職缺判斷一致時等於「需求分數 × 缺口權重」；11/17 改成逐份加總，避免平手時一次翻轉讓優先度加倍（見 `docs/evaluation.md` 3.3 方案 A）
-- **跨職缺的「我的狀態」**：取各份判斷中最常見的；平手取比較差的。理由：狀態本來應該是「我」的屬性，跨職缺不一致是 LLM 判斷的變動；取多數可以抵銷單次的偶然，平手時保守，寧可多列一個缺口，也不要誤以為自己會。不一致的會用 ⚠️ 標出來。
+- **優先度** = 每份職缺各算一次再加總：必備 2／加分 1 × 那一份的缺口權重（沒有 2、部分 1、有 0）×「A 或 B」的份額（第 5 節；沒有群組時是 1）。所有職缺判斷一致、沒有群組時等於「需求分數 × 缺口權重」；11/17 改成逐份加總，避免平手時一次翻轉讓優先度加倍（見 `docs/evaluation.md` 3.3 方案 A；11/18 S1 量到最大跳動從 12 降到 3–4）
+- **職缺適合度**（`market.job_fit`，11/17）= (有 + 0.5 × 部分) ÷ 必備條件數；只看必備（沒有必備的職缺才看全部）；「A 或 B」一組算一個條件、取成員裡最好的狀態。年資、待遇不算進來（年資只列出來給使用者判斷）
+- **最接近的職務類別**（`market.role_fit`）= 各類職缺適合度的平均；類別至少 3 份才算
+- **跨職缺的「我的狀態」**（只用在報告的狀態欄）：取各份判斷中最常見的；平手取比較差的。理由：狀態本來應該是「我」的屬性，跨職缺不一致是 LLM 判斷的變動；取多數可以抵銷單次的偶然，平手時保守，寧可多列一個缺口，也不要誤以為自己會。不一致的會用 ⚠️ 標出來。**優先度和適合度不用這個多數決的結果**，而是用每份職缺各自的判斷（11/18 試過把多數決套用到每份職缺，排名反而更不穩，見第 15 節）。
 
 ## 5. 判斷規則
 
@@ -125,6 +129,19 @@ skills:
 | ✅ 有 | 名稱對上（程式）或 LLM 判斷 same，**而且至少有一個作品當證據** |
 | 🟡 部分 | 同一個技能但沒有證據；或 LLM 判斷 related（相關技能，例：要 LangGraph，我有手寫 agent loop） |
 | ❌ 沒有 | LLM 判斷 none、沒有回答，或對應到 profile 裡不存在的技能 |
+
+**「A 或 B」多選一（11/23，ADR-10，`job_agent/anyof.py`）：** 職缺寫「Python 或 C#」「以下任一語言」時，原文只要求其中一個。
+
+| 規則 | 誰保證 |
+|---|---|
+| 技能名稱照樣一個技能一個項目（同義詞表、名稱對上、市場統計不受影響），同一組標一樣的 `any_of` 標籤（g1、g2…） | 拆解規則（prompt） |
+| 只標「或」範圍內的技能（「Go 或 Rust、REST API」只有 Go、Rust）；「A、B 或 C」整串算一組；括號裡的選項不加總稱；「等／例如／such as」的舉例、「經驗或研究背景」「或以上」「或相關科系」不算 | 拆解規則 |
+| 群組要有根據：至少 2 個成員、必備／加分一致、成員的原文在同一行而且那一行有「或／任一／or／one of」→ 不然取消群組（`clean_groups`） | 程式 |
+| 同義詞合併或去重後剩不到 2 個成員 → 取消；同一個技能同時單獨列出 → 以單獨那一筆為準 | 程式（`normalize_groups`、`dedupe`） |
+| 計分：一組算一個條件，狀態取成員裡最好的；優先度的缺口算在最接近的選項上（最好是「有」→ 全部 0；「部分」→ 部分的成員平分；全部「沒有」→ 平分） | 程式（`conditions`、`shares`） |
+| 需求分數不打折（Python 在「Python 或 C#」裡照樣算必備 2 分），報告另外標「多選一 k 份」 | 程式 |
+
+取消群組 = 回到每個技能各算一個條件 → 錯誤只會往保守的方向（低估適合度），不會高估。
 
 **證據不由 LLM 輸出**：LLM 只回答「對應到哪個 profile 技能、是 same／related／none」，證據和 level 一律由程式從 `profile.yaml` 複製。LLM 說的技能名稱不在 profile 裡 → 不採信，算「沒有」。
 
@@ -146,11 +163,11 @@ skills:
 履歷 ──► ⓪ 履歷 → 草稿  A 讀檔（程式）→ B 整理（LLM）→ C 清理（程式）→ D 檢查（程式）
                                                               │（profile 草稿，人檢查後）
                                                               ▼
-職缺文字 ──► ① 拆解（LLM，structured outputs，有快取）──► JobRequirements
+職缺文字 ──► ① 拆解（LLM，structured outputs，有快取）→ 群組檢查（程式）──► JobRequirements
                                                               │
 profile.yaml ──► ② 讀取技能檔（Pydantic 檢查證據 id）───────────┤
                                                               ▼
-            ③ 比對  A 整理（程式）：去掉軟實力 → 同義詞統一名稱 → 去重
+            ③ 比對  A 整理（程式）：去掉軟實力 → 同義詞統一名稱 → 去重 → 群組剩不到 2 個就取消
                     B 名稱對上（程式）：name／alias，寫法差異也算 → 不呼叫 LLM
                     C 語意對應（LLM）：剩下的一次問完，same／related／none
                     D 決定狀態（程式）：檢查技能存在、複製證據和 level
@@ -164,11 +181,11 @@ profile.yaml ──► ② 讀取技能檔（Pydantic 檢查證據 id）──�
 ```
 上傳履歷 ─► read_resume_bytes ─► mask_contacts（遮 email／電話）─► ⓪ B–D 草稿
                                                                     │
-samples/jobs.json（10 份，只有技能清單，不用再拆解）─────────────────┤
+samples/jobs.json（20 份，選了職務就只取那一類；只有技能清單）──────┤
                                                                     ▼
-                         pipeline.analyze：③ 比對 × 10 份同時送出（ThreadPoolExecutor）
+                         pipeline.analyze：③ 比對 × N 份同時送出（ThreadPoolExecutor）
                                                                     │
-                         app.py：⑤ 統計 → 卡片、長條圖、表格 ◄────────┘
+                         app.py：⑤ 統計 → 卡片、Top 5、長條圖、表格 ◄──┘
 ```
 
 | 步驟 | 檔案 | 誰做 |
@@ -177,14 +194,17 @@ samples/jobs.json（10 份，只有技能清單，不用再拆解）────
 | ⓪ B 整理 | `resume.py` 的 `profile_from_text` → `ResumeDraft`（不存執行軌跡） | LLM |
 | ⓪ C 清理＋D 檢查 | `resume.py` 的 `clean` → `Profile` | 程式 |
 | 網頁：讀上傳檔＋遮罩 | `resume.py` 的 `read_resume_bytes`、`mask_contacts` | 程式 |
-| ① 拆解 | `extract.py` | LLM（規則寫在 SYSTEM） |
+| ① 拆解 | `extract.py`（`years:` 蓋過模型抽的年資） | LLM（規則寫在 SYSTEM） |
+| ① 群組檢查 | `anyof.py` 的 `clean_groups`（在 `extract_from_text` 裡呼叫） | 程式 |
 | ② 技能檔 | `schemas.py` 的 `Profile` | 程式 |
-| ③ A 整理 | `normalize.py`（`drop_soft`、`unify`、`key`）＋ `match.py` 的 `dedupe` | 程式 |
+| ③ A 整理 | `normalize.py`（`drop_soft`、`unify`、`key`）＋ `match.py` 的 `dedupe`＋`anyof.normalize_groups` | 程式 |
 | ③ B 名稱對上 | `match.py` 的 `exact_match` | 程式 |
 | ③ C 語意對應 | `match.py` 的 `semantic_map` | LLM |
 | ③ D 決定狀態 | `match.py` 的 `decide` | 程式 |
 | ④ 缺口報告 | `report.py` | 程式 |
-| ⑤ 市場缺口報告 | `market.py` | 程式 |
+| ⑤ 市場缺口報告 | `market.py`（`aggregate`、`priority`、`job_fit`、`rank_jobs`、`role_fit`）；「A 或 B」計分在 `anyof.py` | 程式 |
+| 職務類別 | `roles.py`（`ROLES`、`ROLE_HINTS`；類別只在這裡定義）、`samples.load_roles` | 程式（人標） |
+| 評估 | `evals/`（`samples_eval`、`extract_eval`、`stability`、`fit_eval`；設計見 `docs/evaluation.md`） | 程式（S1 會呼叫 LLM） |
 | 網頁：平行比對 | `pipeline.py` 的 `analyze`（一份失敗不影響其他份；結果照樣本順序排回） | 程式 |
 | 網頁：樣本職缺 | `samples.py` 的 `strip_job`、`export_samples`、`load_samples` | 程式 |
 | 網頁：畫面 | `app.py`（只負責畫面，邏輯全部呼叫 `job_agent`） | — |
@@ -197,15 +217,15 @@ samples/jobs.json（10 份，只有技能清單，不用再拆解）────
 
 | 模型 | 欄位 |
 |---|---|
-| `Requirement` | `skill`（統一英文名）、`original_text`（職缺原文）、`category`（language／framework／llm／ml／infra／data／soft／other）、`required` |
+| `Requirement` | `skill`（統一英文名）、`original_text`（職缺原文）、`category`（language／framework／llm／ml／infra／data／soft／other）、`required`、`any_of`（「A 或 B」群組標籤，11/23） |
 | `JobRequirements` | `title`、`company`、`min_years`、`requirements`、`responsibilities` |
 | `Evidence` | `id`、`type`（project／work／presentation／research／award）、`summary`、`url` |
 | `ProfileSkill` | `name`、`level`、`aliases`、`evidence` |
 | `Profile` | `evidence`、`skills`；讀檔時檢查每個證據 id 都存在（`model_validator`） |
-| `MatchResult` | `skill`、`required`、`status`、`evidence`、`level`、`reason`、`how`（name／same／related／none）、`matched_to` |
+| `MatchResult` | `skill`、`required`、`status`、`evidence`、`level`、`reason`、`how`（name／same／related／none）、`matched_to`、`any_of` |
 | `GapReport` | `job`、`matches`、`top_gaps`、`created_at` |
 | `SkillMapping`／`MappingResult` | ③ C 段給 LLM 的回答格式（`match.py`） |
-| `Run`／`SkillStat` | ⑤ 市場報告的彙總資料（`market.py`，dataclass） |
+| `Run`／`SkillStat`／`JobFit` | ⑤ 市場報告的彙總資料（`market.py`，dataclass）；`SkillStat` 多記每份職缺的份額（`shares`）和多選一的職缺（`any_of_in`） |
 | `DraftSkill`／`ResumeDraft` | ⓪ 給 LLM 的回答格式（`resume.py`）：和 `ProfileSkill`／`Profile` 很像，但 level 只有 basic／working、沒有 validator（寫錯的 id 由 `clean()` 刪掉，不會讓整次呼叫失敗） |
 
 ## 8. 技術選擇
@@ -217,7 +237,7 @@ samples/jobs.json（10 份，只有技能清單，不用再拆解）────
 | 結構化輸出 | Pydantic → `transform_schema()` → `output_config.format` → `model_validate_json()` | 所有模型都支援；11/5 從強制 tool_choice 改過來 |
 | 設定檔 | YAML（`pyyaml`） | 技能檔和同義詞表要自己手寫，YAML 好讀好改 |
 | 讀履歷 | `pypdf`（PDF）、`python-docx`（Word，段落＋表格） | 純 Python、好安裝；掃描檔（圖片）讀不到字 → 明確報錯 |
-| 測試 | pytest，假的 Claude（`tests/conftest.py` 的 `FakeClient`）；網頁用 Streamlit 的 `AppTest` | 不連網、不花錢；61 個測試（假履歷文字，不放真履歷） |
+| 測試 | pytest，假的 Claude（`tests/conftest.py` 的 `FakeClient`）；網頁用 Streamlit 的 `AppTest` | 不連網、不花錢；123 個測試（11/24；假履歷文字、自己編的職缺句子，不放真實原文） |
 | 網頁 | Streamlit（`streamlit>=1.67`）＋ Altair 長條圖 | 只用 Python 就能做出上傳、進度條、分頁、圖表；適合 demo。12 月 FastAPI 之後可以換前端 |
 | 部署 | Streamlit Community Cloud（連 GitHub `main`，push 就自動重新部署） | 免費、設定簡單；key 放平台的 Secrets，不進 repo |
 | 安全 | 每次呼叫費用上限 $0.20、執行軌跡（`trajectories/`）、沒有價格的模型不能用 | 換模型時費用上限也不會失效 |
@@ -227,7 +247,7 @@ samples/jobs.json（10 份，只有技能清單，不用再拆解）────
 
 - 爬蟲（求職網站通常禁止自動化收集）
 - API、資料庫、Docker（12 月 FastAPI＋Docker＋CI；網頁 demo 已在 11/12 上線）
-- 「我最適合哪幾個職缺」的排名（之後由職缺問答 agent 回答）
+- 待遇（之後可能像 `years:` 一樣加 `salary:` 欄位，11/30 回顧決定）
 - 履歷改寫、投遞追蹤
 - 串職缺 API（更遠的計畫，見第 14 節）
 - 多使用者、登入
@@ -248,6 +268,19 @@ samples/jobs.json（10 份，只有技能清單，不用再拆解）────
 | 網頁版費用 | 每人 < $0.02 | 11/11 網頁實測：**US$0.0120**（履歷＋比對 10 份）；比對失敗 0 份 |
 | 網頁版等待時間 | < 60 秒 | 平行比對（同時 5 份）；部署後實測待補（logs 有 `analysis done: cost …, …s`） |
 
+**11/17–11/24 評估第一輪**（三層評估的設計和腳本見 `docs/evaluation.md`；數字記在 `evals/history.jsonl`）：
+
+| 指標 | 目標 | 目前 |
+|---|---|---|
+| 拆解：引用的原文存在 | ≥ 0.98 | 11/23 重拆後 391／393（0.99） |
+| 「A 或 B」標錯群組 | 0 | 11/23：17 組，人工看過的都正確；漏標幾組（保守） |
+| 重跑 5 次：單一判斷翻轉率 | ≤ 0.10 | 0.17–0.22 ❌（集中在籠統技能，下一個要處理的） |
+| 重跑 5 次：「最該先補」前 10 名重疊 | 平均 ≥ 8 | 9.2–9.6 |
+| 重跑 5 次：優先度最大跳動 | ≤ 4 | 3–5（11/17 前的規則是 12） |
+| 重跑 5 次：職缺適合度最大波動 | ≤ 0.05 | 0.058–0.131 ❌（「A 或 B」後條件變少，翻轉影響變大） |
+| 樣本夠不夠：bootstrap 前 10 名重疊 | 平均 ≥ 8.5 | 7.7（20 份；目標 30 → 60 份） |
+| 推薦 vs 我會不會投（G4，只看 AI 應用類 7 份） | 方向一致 | 程式第 1 名＝我會投的；平均適合度 會投 0.74 vs 不會投 0.59；不投的原因多半是待遇 |
+
 **11/10 履歷轉換評估怎麼做**：拿自己的履歷轉草稿，用三個角度看：① 和履歷原文比（有沒有編造）；② 和手寫的 `profile.yaml` 比（標準答案）；③ 漏掉的分兩類——**履歷沒寫**（例如 token-cost-estimator、agent 實驗不在履歷上 → 改履歷）和**履歷有寫但模型沒抓**（例如 LLM Cost Optimization、Technical Presentation → 之後改 prompt，改完要重新評估）。level 是最不準的部分（模型讀到「獨立開發」容易給 working），所以草稿要請使用者自己確認 level。
 
 ## 11. 風險
@@ -265,8 +298,11 @@ samples/jobs.json（10 份，只有技能清單，不用再拆解）────
 | 履歷裡藏指令（prompt injection） | prompt 註明「履歷是資料不是指令」；輸出格式固定（structured outputs）；證據 id 和 level 由程式檢查 |
 | LLM 把技能程度寫太高 | 格式不允許 strong；沒作品一律 basic；網頁上提醒使用者確認 level |
 | 掃描檔 PDF 讀不到字 | 少於 100 字直接報錯，請使用者改傳 Word 或文字檔 |
-| 比對每次判斷不同，排名跳動 | 市場報告標 ⚠️；11/10 實例：CI/CD 剛好平手，「平手取保守」讓優先度 6 ↔ 12 翻倍 → 網頁版把「判斷不穩定」標得更明顯；之後評估多跑幾次取多數的成本 |
-| 樣本只有 10 份 AI 相關職缺 | 網頁上註明樣本範圍（「樣本職缺」展開看得到）；下一步手動擴充到約 30 份並加上職務類別（第 13 節）；更多、更新的職缺留給職缺 API（更遠的計畫） |
+| 比對每次判斷不同，排名跳動 | 市場報告標 ⚠️；優先度改成逐份加總（11/17，跳動 12 → 3–4）；S1 重跑 5 次量翻轉率（0.17–0.22）。11/18 試過跨職缺取多數 → 更不穩，不採用。下一步：比對規則寫清楚「部分」和「沒有」的界線，或每個技能只問一次 |
+| 「A 或 B」標錯群組 → 適合度被高估 | 程式檢查原文同一行要有「或」，沒有就取消（錯往保守方向）；`extract_eval` 列出 split／ok／maybe 給人看；新群組沒看過原文的先人工確認再 commit |
+| 改拆解規則要全部重拆，技能名稱會變 | 要重拆的改動集中成一次；重拆後跑 `samples_eval` 看名稱和前 10 名（11/23 名稱 178 → 197，之後整理同義詞） |
+| 評估工具本身出錯（例如 API key 失效時照樣存了空結果） | S1 整批失敗就停、有失敗就不記進 history（11/23）；評估程式也有自己的測試 |
+| 樣本只有 20 份 AI 相關職缺 | 網頁上註明樣本範圍（「樣本職缺」展開看得到）；每一類至少 3 份才放進選項；手動擴充到約 30 → 60 份（停止標準見 `docs/evaluation.md` 4.2）；更多、更新的職缺留給職缺 API（更遠的計畫） |
 | 公開樣本洩漏職缺原文 | `strip_job` 清空 `original_text`、`responsibilities`；測試檢查匯出的檔案裡沒有原文；commit 前自己打開檢查 |
 | 檔案太大傳不上去 | 11/12 朋友回報 → `maxUploadSize` 從 2 MB 改成 10 MB，上傳框標題寫「最大 10 MB」；字數上限另外擋費用 |
 
@@ -275,18 +311,22 @@ samples/jobs.json（10 份，只有技能清單，不用再拆解）────
 ```
 job-gap-agent/
 ├── docs/design.md          ← 這份文件
+├── docs/evaluation.md      ← 評估設計（三層、標準答案、穩定度、樣本夠不夠）
+├── docs/design-dec-jan.md、design-feb.md ← 12–2 月的設計
 ├── jobs/                   ← 職缺文字檔（.gitignore）
 ├── profile.yaml            ← 我的技能檔（.gitignore）
 ├── profile.example.yaml    ← 範例技能檔（公開，測試用它）
 ├── skill_synonyms.yaml     ← 技能名稱同義詞表（公開）
 ├── app.py                  ← 網頁 demo（Streamlit，只負責畫面）
-├── samples/jobs.json       ← 公開的樣本職缺（只有技能清單）
+├── samples/jobs.json       ← 公開的樣本職缺（只有技能清單、role、年資、any_of）
 ├── .streamlit/config.toml  ← 上傳上限、不傳使用統計（secrets.toml 在 .gitignore）
 ├── job_agent/
 │   ├── schemas.py          ← Pydantic 格式
 │   ├── llm.py              ← 呼叫 Claude、structured outputs、價格、費用上限、執行軌跡
 │   ├── extract.py          ← ① 拆解＋快取
 │   ├── normalize.py        ← 名稱統一、軟實力排除
+│   ├── anyof.py            ← 「A 或 B」：範圍判斷、群組檢查、條件、份額（11/23）
+│   ├── roles.py            ← 職務類別（11/16）
 │   ├── match.py            ← ③ 比對 A–D
 │   ├── report.py           ← ④ 缺口報告
 │   ├── market.py           ← ⑤ 市場缺口報告
@@ -295,9 +335,11 @@ job-gap-agent/
 │   ├── pipeline.py         ← 網頁版：平行比對多份職缺
 │   ├── samples.py          ← 網頁版：匯出／讀取樣本職缺
 │   └── __main__.py         ← python -m job_agent jobs [--market]
+├── evals/                  ← 評估腳本（samples_eval、extract_eval、stability、fit_eval、metrics）＋ history.jsonl
+├── gold/                   ← 我的標準答案和評分（.gitignore）
 ├── resumes/                ← 履歷（.gitignore）
 ├── cache/、reports/、trajectories/  ← 執行產生（.gitignore）
-└── tests/                  ← 61 個測試
+└── tests/                  ← 123 個測試
 ```
 
 ## 13. 時程
@@ -313,8 +355,12 @@ job-gap-agent/
 | 11/10 | ⓪ 履歷 → profile 草稿（`resume.py`）、軌跡開關、轉換評估 |
 | 11/11 | 網頁 demo 本機版：`app.py`、平行比對、公開樣本、遮掉聯絡資料、三層費用保護 |
 | 11/12 | 部署到 Streamlit Community Cloud、報告頁美化（卡片、長條圖、可排序表格）、上傳上限 10 MB |
-| 11/16– | 擴充樣本到約 30 份＋職務類別（網頁上選目標職務，市場報告只統計那一類） |
-| 11/17–11/30 | 貼單份職缺出報告、修 bug；11/30 月底回顧 |
+| 11/16 | 職務類別（`roles.py`、`role:`、網頁選職務）、樣本擴充到 20 份 |
+| 11/17 | 「最適合你的職缺 Top 5」＋最接近的類別；評估設計（`docs/evaluation.md`）；三個快速修正（優先度逐份加總、軟實力只看名單、類別差距小說「差不多」） |
+| 11/18 | 評估腳本進 repo、第一輪基準、G4 盲評；同義詞表 13 → 49 組；ai-product 改名「AI 原生全端工程師」；跨職缺取多數試過不採用 |
+| 11/23 | 「A 或 B」（ADR-10）兩步：程式（行為不變）→ 改拆解規則、重拆 20 份 |
+| 11/24 | 年資欄（`years:`）、`fit_eval --role`、design v0.6 |
+| 11/25–11/30 | 收職缺到約 30 份、12 月前置（Docker Desktop、部署平台）；11/30 月底回顧 |
 | 12 月 | FastAPI＋Docker＋CI |
 | 1 月 | agent 功能：職缺問答 agent → 學習資源推薦 |
 
@@ -361,13 +407,28 @@ job-gap-agent/
 | 11/12 | 部署到 Streamlit Community Cloud；Console 另建 workspace＋專用 key | 和自己開發用的 key 分開，花費上限只管 demo |
 | 11/12 | **畫面不顯示費用**，只記到 logs | 使用者不需要；README 保留「約 US$0.01／次」給想了解成本控制的人 |
 | 11/12 | 報告頁用卡片＋長條圖＋可排序表格，不再顯示 Markdown | 一眼看到重點；⚠ 判斷不穩定在圖上就看得到 |
+| 11/16 | **職務類別由人標**（職缺檔開頭 `role:`），不讓 LLM 猜；類別只在 `roles.py` 定義 | 收集時本來就會讀過一遍，人標又快又準、結果固定、不花錢；之後貼單份職缺時再讓 LLM 分類，用人標的當標準答案 |
+| 11/16 | **快取指紋只算送給模型的內容** | 改 `role:`、`years:` 這類不送給模型的欄位不用重拆、不花錢 |
+| 11/17 | 優先度改成**逐份加總**；軟實力**只看名單**（不看模型標的 category）；兩類差不到 0.10 說「差不多接近」 | 評估發現排名跳動有一半是平手規則造成的；模型標 soft 不穩定，把 Requirement Analysis 這類專業能力丟掉；樣本少時不下結論 |
+| 11/17 | **三層評估**：L0 程式檢查（免費）、L1 對照標準答案、L2 同一輸入重跑 5 次（S1）；原始結果存 `runs.json`，改規則時離線重算 | 先量再改，改完用同一批資料比較，數字變好才 commit |
+| 11/18 | **不採用跨職缺取多數**（把多數決套用到每份職缺） | 用 S1 資料離線重算：翻轉率沒降，優先度最大跳動回到 12 → 多數決一換邊，所有職缺一起翻，等於把逐份加總修掉的放大效果帶回來 |
+| 11/18 | 同義詞表 13 → 49 組，只合併四種理由：縮寫、詞形、多餘的修飾詞、同一機制的不同叫法 | 72% 的名稱只出現一次，Tool Calling／Tool Use／Function Calling 被拆散排不進前 10 名；「只出現一次的比例」不當目標（技能需求本來就是長尾） |
+| 11/18 | `ai-product` 顯示名稱改成「AI 原生全端工程師」 | 這類職缺實際是用 AI coding 工具做全端開發；只改 `roles.py` 一行、id 不變、不重拆 |
+| 11/18 | G4：推薦結果 vs 我會不會投 → 只有 1／5 重疊 | `fit_score` 只量技能；我不投多半是因為職務類別、待遇、年資 → 網頁標題的意思其實是「技能最符合」；11/24 只看目標類別時方向一致 |
+| 11/23 | **「A 或 B」用 `any_of` 群組（ADR-10）**：名稱照樣拆開、計分時一組算一個條件；不選「合併成一項」「人工標」「全域替代表」 | 合併成一項會讓名稱更碎、Python 的需求分數失真；人工標不能用在之後的貼單份職缺；全域表不看原文，會把「且」算成「或」 |
+| 11/23 | **分兩步上線**：先改程式（`any_of` 用 `SkipJsonSchema` 不給模型看 → 指紋不變、驗證現有報告逐字相同），再改拆解規則重拆 | 每一步的影響都能單獨驗證；出問題時知道是程式還是模型 |
+| 11/23 | 群組要有原文根據，不然取消 | 錯誤只往保守方向；標錯群組會高估適合度，比漏標嚴重 |
+| 11/23 | 長清單「A, B, …, or F」照字面算一組；「X、Y 經驗或研究背景」不算 | 規則一致好解釋；後者的「或」連接的不是技能 |
+| 11/24 | 年資用職缺檔開頭的 `years:`（104「工作經歷」），不重拆 | 年資在求職網站的資訊欄、不在複製的原文裡，模型抽不到；開頭欄位不送給模型 |
 | 11/12 | 為什麼 12 月還要 FastAPI | 不是為了開放給外部呼叫，而是讓網頁、1 月的 agent、之後的前端呼叫同一套邏輯；換前端不動後端；之後比較好做限流和監控。漂亮的前端（例如 React）跑在瀏覽器、不能放 key，所以一定要有後端 |
 
 ## 之後的版本
 
 - **11 月中：網頁 demo** ✅（11/12 上線：https://job-gap-agent.streamlit.app）
 - **11 月下旬：**
-  - **擴充樣本＋職務類別**：手動收集到約 30 份 AI 職缺；每份職缺標一個職務類別（例如 AI 應用／Agent 工程師、ML 工程師、AI 原生全端工程師）；網頁上先選目標職務，市場報告只統計那一類
+  - **擴充樣本＋職務類別**：職務類別 ✅（11/16）、20 份 ✅；繼續手動收集到約 30 份（優先 AI 應用、AI 原生全端）
+  - **最適合你的職缺** ✅（11/17）＋年資 ✅（11/24）；待遇待決定
+  - **降低比對翻轉率**（評估最大的缺口，11/30 回顧決定做法）
   - **貼單份職缺**：網頁上貼一份職缺 → 單份缺口報告（`extract_from_text` 已經有；要加字數上限、每連線次數上限，職缺文字視為不可信的輸入；每份約多 $0.003）
 - **12 月：** FastAPI＋Docker＋CI
 - **1 月：** 加入 agent 功能（見下方）

@@ -6,7 +6,7 @@
 # - 只放「真的是同一個技能」的寫法；相關但不同的技能（例如 LangChain 和 AI Agent）不要放
 # - 統一後的名稱最好和 profile.yaml 的技能名稱一樣，這樣程式就能直接對上、不用問 LLM
 #
-# 2026-11-17 擴充（依據 samples/jobs.json 的 20 份職缺；分析見 docs/naming-and-any-of.md）
+# 2026-11-17 擴充（依據 samples/jobs.json 的 20 份職缺；規則見 docs/design.md 第 15 節 11/18）
 # 每一組的註解 = 合併理由。理由只有四種，不符合任何一種的不放進來：
 #   R1 縮寫＝全名                      MCP ＝ Model Context Protocol
 #   R2 單複數、詞形不同                 Agent Framework ＝ Agent Frameworks
@@ -124,7 +124,7 @@ JavaScript: [JS]
 TypeScript: [TS]
 Azure: [Microsoft Azure]
 
-# ===== 11/18 核准的待決定 N1–N10（N7 對照原文後也核准；理由見 docs/naming-and-any-of.md 第 6 節） =====
+# ===== 11/18 核准的待決定 N1–N10（N7 對照原文後也核准；理由見 docs/design.md 第 15 節） =====
 # N1 REST API、N2 LLM Integration、N3 System Design 已加進上面既有的組；下面是新的組。
 
 # N2：做 LLM／AI 應用的不同叫法（R4）。和 LLM API Integration 不併：做應用比串 API 範圍大。
